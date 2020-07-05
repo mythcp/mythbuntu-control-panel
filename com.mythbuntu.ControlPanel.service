@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.mythbuntu.ControlPanel
+Exec=/usr/share/mythbuntu/mcp-backend -l /var/log/mcp.log
+User=root

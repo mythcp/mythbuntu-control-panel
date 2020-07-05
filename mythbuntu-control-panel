@@ -1,0 +1,474 @@
+#! /usr/bin/python3
+## -*- coding: utf-8 -*-
+#
+# Mythtbuntu Control Panel is a modified version of the original MCC program
+# «mythbuntu-control-panel» - An extendable tool for configuring systems using 
+# the Mythbuntu PPA
+#
+# Modifications copyright (C) 2020, Ted (MythTV forums member heyted)
+# Original work copyright (C) 2007-2010, Mario Limonciello, for Mythbuntu
+#
+#
+# This is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this application; if not, write to the Free Software Foundation, Inc., 51
+# Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+##################################################################################
+
+import optparse
+import logging
+import os
+import apt_pkg
+import traceback
+import time
+
+import dbus.mainloop.glib
+from MythbuntuControlPanel.backend import UnknownHandlerException, PermissionDeniedByPolicy, BackendCrashError, dbus_sync_call_signal_wrapper, Backend, DBUS_BUS_NAME
+
+from gi.repository import Gtk, Gdk
+
+import dbus
+
+from aptdaemon import client
+from aptdaemon.enums import *
+from aptdaemon.gtk3widgets import (AptErrorDialog, AptProgressDialog)
+
+UIDIR = '/usr/share/mythbuntu/ui'
+
+from MythbuntuControlPanel.plugin import MCPPlugin,MCPPluginLoader
+
+#Translation Support
+from gettext import gettext as _
+
+class ControlPanel():
+
+    def __init__(self,debug,plugin_root_path,single):
+        """Initalizes the different layers of the Control Panel:
+           Top Level GUI
+           Plugins
+           Plugin State
+           Signal Connection"""
+
+        apt_pkg.init()
+        self.ac = None
+
+        #Initialize main GUI before any plugins get loaded
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file('%s/mythbuntu_control_panel.ui' % UIDIR)
+
+        #set icon
+        if os.path.exists('/usr/share/pixmaps/mythbuntu.png'):
+            Gtk.Window.set_default_icon_from_file('/usr/share/pixmaps/mythbuntu.png')
+        elif os.path.exists('/usr/share/icons/Human/48x48/places/start-here.png'):
+            Gtk.Window.set_default_icon_from_file('/usr/share/icons/Human/48x48/places/start-here.png')
+
+        #make widgets referencable from top level
+        for widget in self.builder.get_objects():
+            if not isinstance(widget, Gtk.Widget):
+                continue
+            widget.set_name(Gtk.Buildable.get_name(widget))
+            setattr(self, widget.get_name(), widget)
+
+        #connect signals
+        self.builder.connect_signals(self)
+        self.buttons_area.set_sensitive(True)
+
+        if os.path.exists(plugin_root_path) and \
+                     os.path.exists(plugin_root_path + '/python') and \
+                     os.path.exists(plugin_root_path + '/ui'):
+            self.plugin_root_path = plugin_root_path
+        else:
+            self.plugin_root_path = '/usr/share/mythbuntu/plugins'
+        logging.debug("Using plugin root path of : %s" % self.plugin_root_path)
+
+        #For intializing all plugin classes we can find
+        self.index={}
+        self.plugins=[]
+        self.loader=MCPPluginLoader(self.plugin_root_path)
+
+        #Initalize the package management interface
+        self.install=[]
+        self.remove=[]
+        self.reconfigure_root={}
+        self.reconfigure_user={}
+        self.request_unauth_install = False
+        self.request_update = False
+
+        #Initialize plugin state
+        self.refreshState()
+
+        if len(self.plugins) == 0:
+            self.main_label.set_text(_("You currently have no plugins installed.  To get started, you need to install one or more plugins."))
+
+        #If we are running in single plugin mode, we'll change a few things
+        if single:
+            found=False
+            for plugin in self.plugins:
+                if plugin.getInformation('name') == single:
+                    found=True
+                    self.togglePlugin(single)
+                    break
+            if found:
+                self.button_scrolledwindow.hide()
+                self.main_window.set_size_request(-1,-1)
+                self.main_window.set_title('Mythbuntu ' + single)
+
+        #Connect signals and enable GUI
+        self.main_window.show()
+
+        #set up dbus
+        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+        self._dbus_iface = None
+
+        Gtk.main()
+
+    ###DBUS Interface###
+    def backend(self):
+        '''Return D-BUS backend client interface.
+
+        This gets initialized lazily.
+        '''
+        if self._dbus_iface is None:
+            try:
+                bus = dbus.SystemBus()
+                obj = bus.get_object(DBUS_BUS_NAME, '/ControlPanel')
+                self._dbus_iface = dbus.Interface(obj, DBUS_BUS_NAME)
+            except Exception as e:
+                if hasattr(e, '_dbus_error_name') and e._dbus_error_name == \
+                    'org.freedesktop.DBus.Error.FileNotFound':
+                    header = _("Cannot connect to dbus")
+                    self.display_error(header)
+                    self.destroy(None)
+                    sys.exit(1)
+                else:
+                    raise
+
+        return self._dbus_iface
+
+    ###Top level GUI definitions###
+    def togglePlugin(self,widget):
+        """Switches the active plugin in the GUI"""
+        #show our buttons on the bottom
+        if not self.main_apply_button.get_properties('visible')[0]:
+            self.main_apply_button.show()
+        if not self.refresh_button.get_properties('visible')[0]:
+            self.refresh_button.show()
+
+        #determine where we are called from (maybe single mode)
+        if type(widget) == str:
+            label = widget
+        else:
+            #actually switch pages in the notebook
+            for child in widget.get_children():
+                for grandchild in child.get_children():
+                    if type(grandchild) == Gtk.Label:
+                        label = grandchild.get_text()
+        plugin = self.index[label]
+        self.tabs.set_current_page(plugin)
+
+    def mainApply(self,widget):
+        #Figure out changes
+        self.compareState()
+
+        #reset package manager
+        self.install=[]
+        self.remove=[]
+        self.reconfigure_root={}
+        self.reconfigure_user={}
+        self.request_update = False
+        self.request_unauth_install = False
+        text=''
+        for plugin in self.plugins:
+            #Check for incomplete flags
+            if plugin.getIncomplete():
+                self.display_error(title=_("Plugin Incomplete"),message=_("The ") + plugin.getInformation("name") +
+                                   _(" plugin is not fully filled out.\nPlease complete it before proceeding."))
+                return
+            changes=plugin.summarizeChanges()
+            if changes:
+                text+=plugin.getInformation("name") + ':\n'
+                text+='- ' + changes + '\n'
+                (a,b,c,d,e,f)=plugin.getRawChanges()
+                self.install+=a
+                self.remove+=b
+                if len(c) > 0:
+                    self.reconfigure_root[plugin.getInformation("module")]=c
+                if len(d) > 0:
+                    self.reconfigure_user[plugin.getInformation("module")]=d
+                if e:
+                    self.request_update = True
+                if f:
+                    self.request_unauth_install = True
+        #If we have changes, then mark the GUI
+        summary_buffer = Gtk.TextBuffer()
+        if len(self.install)          == 0 and \
+           len(self.remove)           == 0 and \
+           len(self.reconfigure_root) == 0 and \
+           len(self.reconfigure_user) == 0 and \
+           not self.request_update:
+            self.summary_apply_button.set_sensitive(False)
+            summary_buffer.set_text(_("No changes found."))
+        else:
+            self.summary_apply_button.set_sensitive(True)
+            summary_buffer.set_text(text)
+        self.summary_text.set_buffer(summary_buffer)
+
+        self.apply_dialog.run()
+        self.apply_dialog.hide()
+
+    def summaryApply(self,widget=None):
+        #Window Management
+        self.apply_dialog.hide()
+        self.main_window.set_sensitive(False)
+        display = widget.get_display()
+        self.main_window.get_window().set_cursor(Gdk.Cursor.new_for_display(display, Gdk.CursorType.WATCH))
+
+        #Main install and remove routine
+        if len(self.install) > 0 or len(self.remove) > 0:
+            self.commit(self.install, self.remove, self.request_unauth_install)
+
+        #changes that happen as root
+        if len(self.reconfigure_root) > 0:
+            try:
+                dbus_sync_call_signal_wrapper(
+                    self.backend(),'scriptedchanges', {'report_progress':self.update_progressbar, \
+                                                       'report_error':self.display_error},
+                    self.reconfigure_root,self.plugin_root_path)
+            except dbus.DBusException as e:
+                if e._dbus_error_name == PermissionDeniedByPolicy._dbus_error_name:
+                    self.display_error(_("Permission Denied by PolicyKit"),_("Unable to process changes that require root."))
+                elif e._dbus_error_name == 'org.freedesktop.DBus.Error.ServiceUnknown':
+                    self._dbus_iface = None
+                    self.display_error(_("Stale backend connection"),_("The connection to the backend has either timed out or gone stale.  Please try again."))
+                else:
+                    self.display_error(title = _("DBus Exception"),
+                                       message = e.get_dbus_name(),
+                                       secondary = e.get_dbus_message())
+            except BackendCrashError as e:
+                self.display_error(_("Backend crashed"),_("The backend has unexpectedly gone away."))
+                self._dbus_iface = None
+
+        #changes that happen as a user
+        if len(self.reconfigure_user) > 0:
+            for plugin in self.plugins:
+                for item in self.reconfigure_user:
+                    if plugin.getInformation("module") == item:
+                        plugin.user_scripted_changes(self.reconfigure_user[item])
+
+        #Last step is to do a package update
+        if self.request_update:
+            self._update_package_lists()
+
+        #Window Management
+        self.progress_dialog.hide()
+        while Gtk.events_pending():
+            Gtk.main_iteration()
+
+        self.refreshState()
+        self.main_window.set_sensitive(True)
+        self.main_window.get_window().set_cursor(None)
+
+    def commit(self, install, remove, allow_unauth=False):
+        if not self.ac:
+            self.ac = client.AptClient()
+        # parameter order: install, reinstall, remove, purge, upgrade
+        #                  wait, reply_handler, error_handler
+        t = self.ac.commit_packages(install, [], remove, [], [], [],
+                                    wait=False,
+                                    reply_handler=None,
+                                    error_handler=None)
+        if allow_unauth:
+            t.set_allow_unauthenticated(True)
+        self._run_transaction(t)
+
+
+    def _run_transaction(self, transaction):
+        apt_dialog = AptProgressDialog(transaction, parent=self.main_window)
+        theme = Gtk.IconTheme.get_default ()
+        apt_dialog.set_icon(icon = theme.load_icon("update-manager", 16, 0))
+        apt_dialog.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+        try:
+            apt_dialog.run()
+            super(AptProgressDialog, apt_dialog).run()
+        except dbus.exceptions.DBusException as e:
+            msg = str(e)
+            dia = Gtk.MessageDialog(parent=self.main_window, type=Gtk.MessageType.ERROR,
+                            buttons=Gtk.ButtonsType.CLOSE,
+                            message_format=msg)
+            dia.run()
+            dia.hide()
+
+    def _update_package_lists(self):
+        if not self.ac:
+            self.ac = client.AptClient()
+        t = self.ac.update_cache()
+        self._run_transaction(t)
+
+    def update_progressbar(self,progress_text,progress):
+        """Updates the progressbar to show what we are working on"""
+        self.progress_dialog.show()
+        self.progressbar.set_fraction(float(progress)/100)
+        if progress_text != None:
+            self.action.set_markup("<i>"+_(progress_text)+"</i>")
+        while Gtk.events_pending():
+            Gtk.main_iteration()
+        return True
+
+    def display_error(self,message,secondary=None,title=_("Error")):
+        """Displays an error message"""
+        self.progress_dialog.hide()
+        self.main_window.set_sensitive(False)
+        if self.main_window.get_window():
+            display = Gdk.Display.get_default()
+            self.main_window.get_window().set_cursor(Gdk.Cursor.new_for_display(display, Gdk.CursorType.WATCH))
+
+        self.error_dialog.set_title(title)
+        self.error_dialog.set_markup(message)
+        if secondary is not None:
+            self.error_dialog.format_secondary_text(secondary)
+        self.error_dialog.run()
+
+        self.error_dialog.hide()
+        self.main_window.set_sensitive(True)
+        if self.main_window.get_window():
+            self.main_window.get_window().set_cursor(None)
+
+    def destroy(self, widget, data=None):
+        Gtk.main_quit()
+    ###-----------------------###
+
+    ###State Machine related functionality for different plugins###
+    def compareState(self):
+        """Compares the current state of each plugin to it's internal
+           structure"""
+        queued_removals=[]
+        for plugin in self.plugins:
+            try:
+                plugin.compareState()
+            except:
+                self.disable_plugin(plugin,"compareState")
+                queued_removals.append(plugin)
+                continue
+        if len(queued_removals) != 0:
+            self.process_removals(queued_removals)
+
+    def refreshState(self,widget=None):
+        """Captures the current state of each plugin and marks the GUI
+           to reflect all current settings"""
+        self.refreshPluginList()
+        self.cache = apt_pkg.Cache()
+        queued_removals=[]
+        for plugin in self.plugins:
+            plugin.updateCache(self.cache)
+            try:
+                plugin.captureState()
+            except:
+                self.disable_plugin(plugin,"captureState")
+                queued_removals.append(plugin)
+                continue
+            try:
+                plugin.applyStateToGUI()
+            except:
+                self.disable_plugin(plugin,"applyStateToGUI")
+                queued_removals.append(plugin)
+                continue
+        if len(queued_removals) != 0:
+            self.process_removals(queued_removals)
+
+    def refreshPluginList(self):
+        """Loads any plugins into our notebook"""
+        self.loader.reload_plugins()
+        new_plugins = self.loader.find_plugin_instances()
+        sorted_plugins = []
+        for new_plugin in new_plugins:
+            plugin_name = new_plugin._information["name"]
+            sorted_plugins.append((plugin_name, new_plugin))
+        if len(sorted_plugins) > 4:
+            nameindex = 0
+            for name in ['Repositories', 'System Roles', 'Setup', 'Startup Behavior', 'Developmental*']:
+                plgindex = 0
+                for plugin in sorted_plugins:
+                    if plugin[0] == name:
+                        if nameindex == 4:
+                            sorted_plugins.insert(len(sorted_plugins)+1, sorted_plugins.pop(plgindex))
+                            break
+                        else:
+                            sorted_plugins.insert(nameindex, sorted_plugins.pop(plgindex))
+                            break
+                    plgindex = plgindex + 1
+                nameindex = nameindex + 1
+        for name, new_plugin in sorted_plugins:
+            found=False
+            for plugin in self.plugins:
+                if new_plugin==plugin:
+                    found=True
+            if not found:
+                (name,tab) = new_plugin.insert_subpage(self.tabs,self.tab_listing,self.togglePlugin)
+                new_plugin.insert_extra_widgets()
+                new_plugin.emit_progress=self.update_progressbar
+                self.plugins.append(new_plugin)
+                self.index[name] = tab
+
+    def disable_plugin(self,plugin,function):
+        """Disables a misbehaving plugin"""
+        self.display_error(message=_("Exception in " + function + " of plugin " ) +
+                                      plugin.getInformation("name"),
+                                      secondary=_("\nDisabling Plugin."))
+        traceback.print_exc()
+        for child in self.tab_listing.get_children():
+            if child.get_label() == plugin.getInformation("name"):
+                self.tab_listing.remove(child)
+                break
+
+    def process_removals(self,removals):
+        """Process deferred plugin removals that will happen when we
+           need to disable a plugin.
+           We defer because otherwise the statemachine breaks"""
+        for item in removals:
+            self.plugins.remove(item)
+
+def parse_argv():
+    '''Parse command line arguments, and return (options, args) pair.'''
+
+    parser = optparse.OptionParser()
+    parser.add_option ('--debug', action='store_true',
+        dest='debug', default=False,
+        help=_('Enable debugging messages.'))
+    parser.add_option ('--plugin-root-path', type='string',
+        dest='plugin_root_path', default='/usr/share/mythbuntu/plugins',
+        help=_('Use plugins from an alternate directory (Useful for development)'))
+    parser.add_option ('-l', '--logfile', type='string', metavar='FILE',
+        dest='logfile', default=None,
+        help=_('Write logging messages to a file instead to stderr.'))
+    parser.add_option ('-s', '--single' , type='string', dest='single', default=None,
+        help=_('Run in single plugin mode. '))
+    (opts, args) = parser.parse_args()
+    return (opts, args)
+
+def setup_logging(debug=False, logfile=None):
+    '''Setup logging.'''
+
+    logging.raiseExceptions = False
+    if debug:
+        logging.basicConfig(level=logging.DEBUG, filename=logfile,
+            format='%(asctime)s %(levelname)s: %(message)s')
+    else:
+        logging.basicConfig(level=logging.WARNING, filename=logfile,
+            format='%(levelname)s: %(message)s')
+
+if __name__ == '__main__':
+    argv_options, argv_args = parse_argv()
+    setup_logging(argv_options.debug, argv_options.logfile)
+
+    cc = ControlPanel(argv_options.debug,
+                       argv_options.plugin_root_path,
+                       argv_options.single)

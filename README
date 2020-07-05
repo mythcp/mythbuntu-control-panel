@@ -1,0 +1,167 @@
+# Mythbuntu Control Panel (MCP)
+# Original work (Mythbuntu Control Centre) by: Mario Limonciello
+# MCP source code: https://github.com/mythcp/mythbuntu-control-panel
+
+See www.mythtv.org/wiki/Mythbuntu_Control_Panel for installation and usage 
+instructions.
+
+---                                  ---
+-- What's this wonderful application? --
+---                                  ---
+This application is based on and contains mostly the same code as found in 
+Mythbuntu Control Centre.  MCC was mainly used as part of the Linux distribution
+Mythbuntu, and it was installed when installing the operating system.  MCP is 
+installed after installing Ubuntu, and it is used to install MythTV and perform 
+MythTV related administration tasks.  It aims to minimize the need to perform 
+tasks using the command line to configure the system.
+
+MCP retains MCC's "fully pluggable" architecture.  This means that all
+functionality is actually configurable by the plugins that get installed
+in the standard location rather than with the core application.  This allows
+developers to create their own sets of plugins to be used with the MCP.
+ 
+MCP is community maintained and not endorsed by Canonical.
+
+---                    ---
+-- Architecture Defined --
+---                    ---
+MCP (aka Mythbuntu Control Panel) is a client/server application with the server
+and client intended to run on the same machine.  The two components contact one 
+another via dbus with authentication from PolicyKit.  This allows the frontend 
+and all GUI functionality to run as a userspace process.  The backend is spawned
+using dbus service activation as necessary.  When inactive for a pre-defined 
+time, the backend will stop itself and only respawn when requested by the
+frontend.
+
+The intention behind this architecture definition is to abstract the developer 
+from having to spend time re-inventing processes that are likely already in use 
+by other MCP plugins.
+
+The core MCP application provides hooks available for all plugins to use. 
+Optionally, these hooks can define post install actions or apt related actions.
+
+Functionally, the frontend and backend processes will both import the python 
+plugin and initialize the class for each process.  The frontend also calls the 
+GTK functions, whereas the backend only calls upon two backend functions.
+
+All plugins are stored in /usr/share/mythbuntu/plugins/{python,ui}.  Each 
+plugin requires a python source file and a GtkBuilder UI file.  The details for 
+how these need to be implemented are defined below.
+
+---                ---
+-- Writing a plugin --
+---                ---
+The plugins included with MCP can be reviewed and used as examples when creating
+a new plugin.  MCP can stated using a custom plugin path by running:
+
+ # mythbuntu-control-panel --plugin-root-path=/path/to/plugins/{python,ui}
+
+This launches the control panel with only plugins found in that plugin-root-
+path.  This is helpful for development so that you know your plugin is not
+causing problems early on.
+
+It's best to develop the frontend of a plugin before the backend.  Start out 
+using the Glade Development tool, glade-3.
+
+Opening up glade-3, a few items should be apparent.
+ - The plugin's file name needs to match the top most non window widget of the 
+   plugin.  This is what is used to key off what file the plugin loads for the 
+   GUI.
+ - The goal is to use the minimum amount of space.  Try not to add too much text
+   as the control panel's minimum size is determined by the max size of a 
+   plugin.
+ - Use alignment boxes to keep widgets from the edges.  They look much better 
+   this way.
+
+After finishing off the GUI, be sure to take note of any widgets that you will 
+need to be keying off in the python file.
+
+Open up the python file in your favorite editor.  We'll discuss the
+elements that are required for the frontend of the plugin first.
+
+--Frontend--
+
+A frontend plugin will always inherit from the class MCPPlugin.  By doing so, a 
+variety of methods will be available for the plugin.  You'll need to override 
+these methods at a minimum to ensure proper functionality:
+ - __init__
+ - captureState
+ - applyStateToGUI
+ - compareState
+
+In __init__ you need to define a dictionary with the items 'name', 'icon' and 
+'ui'.  After building this dictionary, you need to call the parent MCPPlugin 
+__init__ with that dictionary.
+ - 'name' is the name of the plugin on the right side of the MCP UI
+ - 'icon' is the icon that will show up on the right side of the UI
+ - 'ui' is the name of the GtkBuilder file to be loaded (sans .ui)
+
+captureState captures the state of all elements on the system.  It is 
+intentionally unpaired with applyStateToGUI and compareState because MCP may 
+call these at any time.  It's best to store any information determined about the 
+installed system in a dictionary for later use.
+ - query_installed can be used for querying packaged applications
+ - you can import any python packages and use them as well
+
+applyStateToGUI will override any currently set GUI elements with things that 
+were determined in captureState.
+
+compareState will compare that dictionary with the currently set GUI elements to
+determine what's changed.
+ - If it is determined that the page needs more activity before being "done", 
+   self._incomplete can be set to True.
+ - It's important to call MCPPlugin.clearParentState(self) in this function so 
+   that the frontend is in a standard state.
+
+The following functions can be used to record what the backend needs:
+ - _markInstall: marks a package to be installed
+ - _markRemove: marks a package to be removed
+ - _markReconfigureUser: marks a scripted change to be done as a user
+ - _markReconfigureRoot: marks a scripted change to be done by root
+ - _markUpdatePackageList : requests a package list update after completion
+ - _markUnauthenticatedPackages : requests that an unauthenticated package be 
+   installed
+
+Callbacks can also be used, but generally the model is that changes shouldn't 
+occur until after the frontend calls apply.
+
+--Backend--
+
+If you are only making package installs or removals, you don't need to define 
+any more functionality to the plugin.
+
+If you need to represent changes that aren't part of the package 
+(scriptedchanges), then you need to define two more methods:
+ - root_scripted_changes
+ - user_scripted_changes
+Both methods have an argument of a dictionary of items to change.
+
+The exact same python source file is loaded into the backend process when 
+spawned if necessary, so be cognizant that you shouldn't do any GTK 
+initialization in __init__ or the backend will fail.
+
+Generally you want to walk through the dictionary argument for both cases 
+through a for loop as more than one item can be sent at a time.
+
+Running 'dpkg-reconfigure PACKAGE' is OK in this section, but be sure to set the
+env to 'noninteractive' and instead make the changes in flat text files that can
+be read by the maintainer scripts of that package.
+
+Try to use subprocess.call rather than os.system so the return status can be 
+determined.
+
+If you are running an application that may take a long time in your processing 
+functions, you might want to use emit_progress which will update the GUI with 
+the latest status.
+
+To assist in debugging, you may consider importing the 'logging' module.  
+logging.warning('message') will always show up in the backend log logging.debug
+('message') will show up when the backend is spawned with --debug.
+
+--Packaging--
+When your plugin is stable, you can start moving it into the system location of 
+/usr/share/mythbuntu/plugins.  This means that the standard invokation of 
+mythbuntu-control-panel will initialize your plugin along with the others on the
+system.  This adds a new set of variables, particularly if you have any name 
+clashes.  Be sure to test like this before issuing your plugin to make sure 
+there are no blatant problems.

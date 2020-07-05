@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Mythbuntu Control Panel
+Comment=MythTV related configuration
+Icon=mythbuntu
+Exec=/usr/bin/mythbuntu-control-panel
+Terminal=false
+Type=Application
+Categories=GTK;System;Settings
+X-Ubuntu-Gettext-Domain=mythbuntu-control-panel

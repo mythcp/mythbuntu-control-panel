@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+## -*- coding: utf-8 -*-
+#
+# Mythtbuntu Control Panel is a modified version of the original MCC program
+# «mcp-backend» - Mythbuntu Control Panel dbus backend spawner
+#
+# Originally based upon the Jockey dbus backend
+#
+# Modifications copyright (C) 2020, Ted (MythTV forums member heyted)
+# Original work (c) 2008 Canonical Ltd.
+# Original work (c) 2009 Mario Limonciello <superm1@mythbuntu.org>
+#
+# This is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this application; if not, write to the Free Software Foundation, Inc., 51
+# Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+##################################################################################
+
+'''Mythbuntu Control Panel D-BUS backend executable.'''
+
+import sys, optparse, logging, gettext
+
+import MythbuntuControlPanel.backend
+
+def parse_argv():
+    '''Parse command line arguments, and return (options, args) pair.'''
+
+    parser = optparse.OptionParser()
+    parser.add_option ('--debug', action='store_true',
+        dest='debug', default=False,
+        help=_('Enable debugging messages.'))
+    parser.add_option ('-l', '--logfile', type='string', metavar='FILE',
+        dest='logfile', default=None,
+        help=_('Write logging messages to a file instead to stderr.'))
+    parser.add_option ( '--timeout', type='int',
+        dest='timeout', metavar='SECS', default=600,
+        help=_('Timeout for D-BUS service (default: 600, 0: run forever)'))
+
+    (opts, args) = parser.parse_args()
+    return (opts, args)
+
+def setup_logging(debug=False, logfile=None):
+    '''Setup logging.'''
+
+    logging.raiseExceptions = False
+    if debug:
+        logging.basicConfig(level=logging.DEBUG, filename=logfile,
+            format='%(asctime)s %(levelname)s: %(message)s')
+    else:
+        logging.basicConfig(level=logging.WARNING, filename=logfile,
+            format='%(levelname)s: %(message)s')
+
+gettext.install('mythbuntu-control-panel')
+argv_options, argv_args = parse_argv()
+setup_logging(argv_options.debug, argv_options.logfile)
+
+svr = MythbuntuControlPanel.backend.Backend.create_dbus_server()
+if argv_options.timeout == 0:
+    svr.run_dbus_service()
+else:
+    svr.run_dbus_service(argv_options.timeout)
