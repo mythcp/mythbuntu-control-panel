@@ -1,10 +1,37 @@
-The MCC package (of which MCP is based on) was originally debianized by Mario 
-Limonciello <superm1@ubuntu.com> on Tue, 3 Aug 2007 16:41:23 -0500
+------------------Mythbuntu Control Panel------------------
 
-The original MCC source was obtained and is available from Launchpad at 
-https://launchpad.net/ubuntu/+source/mythbuntu-control-centre
+Mythbuntu Control Panel (MCP) is a modified version of Mythbuntu Control Centre
+Copyright (C) 2020  Ted (MythTV Forums member heyted)
+MCP is used to install and configure MythTV on Ubuntu.
+MCP source code: https://github.com/mythcp/mythbuntu-control-panel
 
-Original MCC author & copyright: 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+A copy of the GNU General Public License is available at 
+http://www.gnu.org/licenses/gpl-3.0.html, and it is available on 
+Ubuntu systems at /usr/share/common-licenses.
+
+
+-------------Original Mythbuntu Control Centre-------------
+
+This package was debianized by Mario Limonciello <superm1@ubuntu.com> on
+Tue, 3 Aug 2007 16:41:23 -0500
+
+This original source for this package was obtained via the upstream
+bzr branch at http://bazaar.launchpad.net/~mythbuntu/mythbuntu/mythbuntu-control-centre
+
+You can grab the version currently in use by this revision by
+running 'debian/rules get-orig-source'.
+
+Author & Copyright: 
 	Portions Copyright Michael Vogt <mvo@ubuntu.com>
 	© 2007 Mario Limonciello <superm1@mythbuntu.org>
 
@@ -27,5 +54,5 @@ License:
 On Debian & Ubuntu systems, a complete copy of the GPL can be found under
 /usr/share/common-licenses/GPL
 
-The origianl Debian packaging is © 2007, Mario Limonciello <superm1@ubuntu.com> and is
+The Debian packaging is © 2007, Mario Limonciello <superm1@ubuntu.com> and is
 also licensed under the GPL.
