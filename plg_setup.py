@@ -94,6 +94,17 @@ class SetupPlugin(MCPPlugin):
                         txt_file.write('[Service]\n')
                         txt_file.write('ExecStartPre=/bin/sleep 5')
                     subprocess.run(['systemctl', 'daemon-reload'])
+                    if os.path.exists('/etc/mysql/conf.d/mythtv.cnf'):
+                        cnf_file = open("/etc/mysql/conf.d/mythtv.cnf", "r")
+                        new_cnf_file = ""
+                        for line in cnf_file:
+                            stripped_line = line.strip()
+                            new_line = stripped_line.replace("#bind-address=::", "bind-address=::")
+                            new_cnf_file += new_line +"\n"
+                        cnf_file.close()
+                        writing_file = open("/etc/mysql/conf.d/mythtv.cnf", "w")
+                        writing_file.write(new_cnf_file)
+                        writing_file.close()
                 elif os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
                     subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
 
