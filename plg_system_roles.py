@@ -23,6 +23,7 @@
 
 from MythbuntuControlPanel.plugin import MCPPlugin
 from MythbuntuControlPanel.dictionaries import *
+import shutil
 
 class SystemRolesPlugin(MCPPlugin):
     """A tool for adjusting the role of a system"""
@@ -56,6 +57,13 @@ class SystemRolesPlugin(MCPPlugin):
         if self.dictionary_state[self.primary_backend_radio]:
             self.dictionary_state[self.secondary_backend_radio]=False
 
+        if shutil.which("tv_sort"):
+            self.xmltv_installed_state=True
+        else:
+            self.xmltv_installed_state=False
+        if not self.primary_backend_radio.get_active():
+            self.xmltv_guide_data.set_sensitive(False)
+
     def applyStateToGUI(self):
         """Takes the current state information and sets the GUI
            for this plugin"""
@@ -67,6 +75,17 @@ class SystemRolesPlugin(MCPPlugin):
         #In case we don't have a front or back role
         self.no_backend_radio.set_active(self.no_back)
         self.no_frontend_radio.set_active(self.no_front)
+
+        self.xmltv_guide_data.set_active(self.xmltv_installed_state)
+        
+    def on_backend_select(self, widget, data=None):
+        """xmltv checkbox available if primary backend selected"""
+        prim_backend_selected = self.primary_backend_radio.get_active()
+        if prim_backend_selected:
+            self.xmltv_guide_data.set_sensitive(True)
+        else:
+            self.xmltv_guide_data.set_active(False)
+            self.xmltv_guide_data.set_sensitive(False)
 
     def compareState(self):
         """Determines what items have been modified on this plugin"""
@@ -93,4 +112,9 @@ class SystemRolesPlugin(MCPPlugin):
             else:
                 self._markRemove('mythtv-frontend')
 
+        if self.xmltv_guide_data.get_active() != self.xmltv_installed_state:
+            if self.xmltv_guide_data.get_active():
+                self._markInstall('xmltv')
+            else:
+                self._markRemove('xmltv')
 
