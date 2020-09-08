@@ -47,8 +47,7 @@
             <property name="can_focus">False</property>
             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
             <property name="margin_top">10</property>
-            <property name="label" translatable="yes">Some of the items below may have already been completed when installing
-MythTV.  Apply the items below after installing MythTV.</property>
+            <property name="label" translatable="yes">Apply the items below after installing MythTV.</property>
             <property name="wrap">True</property>
             <property name="xalign">0</property>
           </object>
@@ -151,9 +150,7 @@ add a link to config.xml in the current user's home folder.  </property>
             <property name="can_focus">False</property>
             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
             <property name="margin_top">10</property>
-            <property name="label" translatable="yes">If MythTV Backend is installed and a device on the network needs to
-access it, the item below needs to be enabled.   Apply this after
-configuring MythTV Backend.</property>
+            <property name="label" translatable="yes">Apply this after configuring MythTV Backend if networking is needed.</property>
             <property name="wrap">True</property>
             <property name="xalign">0</property>
           </object>
@@ -195,8 +192,7 @@ configuring MythTV Backend.</property>
             <property name="can_focus">False</property>
             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
             <property name="margin_top">10</property>
-            <property name="label" translatable="yes">The button below will stop MythTV Backend and launch MythTV Backend
-Setup.  If prompted, exit without restarting MythTV Backend and reboot.  </property>
+            <property name="label" translatable="yes">Stop MythTV Backend before launching MythTV Backend Setup.  </property>
             <property name="wrap">True</property>
             <property name="xalign">0</property>
           </object>
@@ -207,6 +203,54 @@ Setup.  If prompted, exit without restarting MythTV Backend and reboot.  </prope
           </packing>
         </child>
         <child>
+          <object class="GtkAlignment" id="stop_backend">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <property name="xscale">0</property>
+            <property name="left_padding">25</property>
+            <child>
+              <object class="GtkCheckButton" id="stopbackend">
+                <property name="label" translatable="yes">Stop MythTV Backend</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">8</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkAlignment" id="run_setup_as_mythtv">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <property name="xscale">0</property>
+            <property name="left_padding">25</property>
+            <child>
+              <object class="GtkCheckButton" id="runsetupasmythtv">
+                <property name="label" translatable="yes">Run MythTV Backend Setup as mythtv user</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">9</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkAlignment" id="alignment2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -214,52 +258,63 @@ Setup.  If prompted, exit without restarting MythTV Backend and reboot.  </prope
             <property name="xscale">0</property>
             <property name="left_padding">25</property>
             <child>
-              <object class="GtkButton" id="mythtv_setup_button">
+              <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="launch_setup" swapped="no"/>
+                <property name="can_focus">False</property>
+                <property name="spacing">20</property>
                 <child>
-                  <object class="GtkAlignment" id="alignment10">
+                  <object class="GtkButton" id="mythtv_setup_button">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="xalign">0.019999999552965164</property>
-                    <property name="xscale">0</property>
-                    <property name="yscale">0</property>
+                    <property name="can_focus">True</property>
+                    <property name="can_default">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="launch_setup" swapped="no"/>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkAlignment" id="alignment10">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="xalign">0.019999999552965164</property>
+                        <property name="xscale">0</property>
+                        <property name="yscale">0</property>
                         <child>
-                          <object class="GtkImage" id="image10">
+                          <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="icon_name">gtk-properties</property>
+                            <child>
+                              <object class="GtkImage" id="image10">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="icon_name">gtk-properties</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label10">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">MythTV Backend Setup</property>
+                                <property name="use_underline">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
                           </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label10">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_left">5</property>
-                            <property name="label" translatable="yes">Launch Backend Setup</property>
-                            <property name="use_underline">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">1</property>
-                          </packing>
                         </child>
                       </object>
                     </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
                 </child>
               </object>
             </child>
@@ -267,7 +322,7 @@ Setup.  If prompted, exit without restarting MythTV Backend and reboot.  </prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">8</property>
+            <property name="position">10</property>
           </packing>
         </child>
       </object>
