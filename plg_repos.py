@@ -3,7 +3,7 @@
 # Mythtbuntu Control Panel is a modified version of the original MCC program
 # «Mythbuntu Repos» - A Plugin for adding Mythbuntu Repos.
 #
-# Modifications copyright (C) 2020, Ted (MythTV forums member heyted)
+# Modifications copyright (C) 2020, Ted (MythTV Forum member heyted)
 # Original copyright (C) 2009, Thomas Mashos, for Mythbuntu
 #
 # This is free software; you can redistribute it and/or modify it under
@@ -95,7 +95,7 @@ class MythbuntuReposPlugin(MCPPlugin):
             self.hseparator5.show()
             self.hseparator6.show()
             self.footer_alignment.show()
-        else:
+        if NumRepos == 0:
             self.versions.append('0')
             self.CurVer = '0'
             self.download_repo_db_label.show()
@@ -195,13 +195,13 @@ class MythbuntuReposPlugin(MCPPlugin):
 
     def downloadFile(self):
         """Download files"""
-        self.emit_progress("Refreshing available repos from server", 0)
-        time.sleep(.5)
         try:
-          url = self.DOWNLOADURL
+            url = self.DOWNLOADURL
         except:
-          url = 'https://raw.githubusercontent.com/mythcp/mythbuntu-control-panel/master/repos.db'
+            url = 'https://raw.githubusercontent.com/mythcp/mythbuntu-control-panel/master/repos.db'
         try:
+            self.emit_progress("Refreshing available repos from server", 0)
+            time.sleep(.5)
             import urllib.request
             from urllib.error import HTTPError,URLError
             # Open the url
