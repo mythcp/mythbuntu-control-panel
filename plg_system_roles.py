@@ -117,4 +117,5 @@ class SystemRolesPlugin(MCPPlugin):
                 self._markInstall('xmltv')
             else:
                 self._markRemove('xmltv')
+                self._markRemove('xmltv-util')
 
