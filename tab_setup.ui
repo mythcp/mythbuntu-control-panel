@@ -161,26 +161,97 @@ add a link to config.xml in the current user's home folder.  </property>
           </packing>
         </child>
         <child>
-          <object class="GtkAlignment" id="alignment4">
+          <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-            <property name="xalign">0</property>
-            <property name="yalign">0</property>
-            <property name="xscale">0</property>
-            <property name="left_padding">25</property>
+            <property name="halign">start</property>
+            <property name="margin_left">1</property>
+            <property name="spacing">7</property>
             <child>
-              <object class="GtkCheckButton" id="delaybackendstart">
-                <property name="label" translatable="yes">MythTV Backend waits for active network</property>
+              <object class="GtkAlignment" id="alignment4">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
+                <property name="can_focus">False</property>
+                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                <property name="xalign">0</property>
+                <property name="yalign">0</property>
+                <property name="xscale">0</property>
+                <property name="left_padding">25</property>
+                <child>
+                  <object class="GtkCheckButton" id="enablenetworking">
+                    <property name="label" translatable="yes">Enable networking</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="clicked" handler="on_network_select" swapped="no"/>
+                  </object>
+                </child>
               </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkAlignment" id="alignment5">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                <property name="halign">start</property>
+                <property name="xalign">0</property>
+                <property name="yalign">0</property>
+                <property name="xscale">0</property>
+                <child>
+                  <object class="GtkComboBoxText" id="delaystartbox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="has_entry">True</property>
+                    <items>
+                      <item translatable="yes">Basic</item>
+                      <item translatable="yes">Ping</item>
+                      <item translatable="yes">HDHomeRun</item>
+                    </items>
+                    <signal name="changed" handler="on_delay_select" swapped="no"/>
+                    <child internal-child="entry">
+                      <object class="GtkEntry">
+                        <property name="can_focus">False</property>
+                        <property name="width_chars">12</property>
+                        <property name="text" translatable="yes">Basic</property>
+                        <signal name="changed" handler="on_delay_select" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkAlignment" id="alignment6">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkEntry" id="pingentry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="width_chars">14</property>
+                    <property name="placeholder_text" translatable="yes">IP or DNS name</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
             </child>
           </object>
           <packing>
-            <property name="expand">True</property>
+            <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">6</property>
           </packing>
@@ -296,7 +367,7 @@ add a link to config.xml in the current user's home folder.  </property>
                               <object class="GtkLabel" id="label10">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">MythTV Backend Setup</property>
+                                <property name="label" translatable="yes"> MythTV Backend Setup</property>
                                 <property name="use_underline">True</property>
                               </object>
                               <packing>
