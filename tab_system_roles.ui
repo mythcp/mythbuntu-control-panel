@@ -189,7 +189,7 @@ content. </property>
                 <property name="left_padding">25</property>
                 <child>
                   <object class="GtkCheckButton" id="xmltv_guide_data">
-                    <property name="label" translatable="yes">Use xmltv for guide data</property>
+                    <property name="label" translatable="yes">Use XMLTV for guide data</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
