@@ -21,7 +21,7 @@
 
 from MythbuntuControlPanel.plugin import MCPPlugin
 from shlex import quote
-import os, string, re, grp, getpass, subprocess, shutil
+import os, string, re, grp, getpass, subprocess, shutil, time
 
 class SetupPlugin(MCPPlugin):
     """A plugin for misc system configuraton and launching backend setup"""
@@ -45,7 +45,22 @@ class SetupPlugin(MCPPlugin):
                 self.adduser_state=True #Current user is in mythtv group
                 break
         self.linkconfig_state=os.path.exists(os.environ['HOME'] + '/.mythtv/config.xml')
-        self.delaybackendstart_state=os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf')
+        if os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
+            self.delaybackendstart_state=True
+            conffile = open("/etc/systemd/system/mythtv-backend.service.d/override.conf", "r")
+            self.delaymethod_state=0 #Basic
+            for line in conffile:
+                if 'wait-until-pingable' in line:
+                    self.delaymethod_state=1 #Ping
+                    position = line.find('wait-until-pingable')
+                    self.pingentry_state = line[position+23:line.find(' ',position+23)] # Ping location text
+                    break
+                if 'hdhomerun' in line:
+                    self.delaymethod_state=2 #HDHomeRun
+                    break
+            conffile.close()
+        else:
+            self.delaybackendstart_state=False
         self.stopbackend_state=False
         self.runsetupasmythtv_state=os.path.exists('/usr/share/polkit-1/actions/org.freedesktop.policykit.mythtv-setup.policy')
 
@@ -54,24 +69,51 @@ class SetupPlugin(MCPPlugin):
            for this plugin"""
         self.addusertomythgrp.set_active(self.adduser_state)
         self.addlinktoconfig.set_active(self.linkconfig_state)
-        status = subprocess.run(['systemctl', 'is-active', '--quiet', 'mythtv-backend']).returncode
-        if status == 0:
-            self.delaybackendstart.set_active(self.delaybackendstart_state)
-            self.stopbackend.set_active(self.stopbackend_state)
+        if self.delaybackendstart_state:
+            self.enablenetworking.set_active(True)
+            self.delaystartbox.set_active(self.delaymethod_state)
+            if self.delaymethod_state == 1: # If delay method is Ping
+                self.pingentry.set_text(self.pingentry_state) # Enter ping location text in text box
+            else:
+                self.pingentry.hide() # Hide ping location text box
         else:
-            self.delaybackendstart.set_sensitive(False)
+            self.enablenetworking.set_active(False)
+            self.pingentry.hide()
+        self.stopbackend.set_active(self.stopbackend_state)
+        self.runsetupasmythtv.set_active(self.runsetupasmythtv_state)
+        status = subprocess.run(['systemctl', 'is-active', '--quiet', 'mythtv-backend']).returncode
+        if not status == 0:
+            self.enablenetworking.set_sensitive(False)
             self.stopbackend.set_sensitive(False)
+        if not status == 0 or not self.delaybackendstart_state:
+            self.delaystartbox.set_sensitive(False)
+            self.pingentry.set_sensitive(False)
         if not shutil.which("mythtv-setup"):
             self.mythtv_setup_button.set_sensitive(False)
-        self.runsetupasmythtv.set_active(self.runsetupasmythtv_state)
-        if not shutil.which("mythtv-setup"):
             self.runsetupasmythtv.set_sensitive(False)
+
+    def on_network_select(self, widget, data=None):
+        """Delay backend start method available if enable networking selected"""
+        networking_selected = self.enablenetworking.get_active()
+        if networking_selected:
+            self.delaystartbox.set_sensitive(True)
+            self.pingentry.set_sensitive(True)
+        else:
+            self.delaystartbox.set_sensitive(False)
+            self.pingentry.set_sensitive(False)
+
+    def on_delay_select(self, widget, data=None):
+        """Ping entry available if ping method selected"""
+        method_selected = self.delaystartbox.get_active_text()
+        if method_selected == "Ping":
+            self.pingentry.show()
+        else:
+            self.pingentry.hide()
 
     def compareState(self):
         """Determines what items have been modified on this plugin"""
         #Prepare for state capturing
         MCPPlugin.clearParentState(self)
-
         adduserstate = self.addusertomythgrp.get_active()
         if self.adduser_state != adduserstate:
             current_user = quote(getpass.getuser())
@@ -81,8 +123,26 @@ class SetupPlugin(MCPPlugin):
                 self._markReconfigureRoot("user_in_mythtv_group",'deluser ' + current_user + ' mythtv')
         if self.linkconfig_state != self.addlinktoconfig.get_active():
             self._markReconfigureUser("link_config_file",self.addlinktoconfig.get_active())
-        if self.delaybackendstart_state != self.delaybackendstart.get_active():
-            self._markReconfigureRoot("delay_backend_start",self.delaybackendstart.get_active())
+        if self.delaybackendstart_state != self.enablenetworking.get_active():
+            if self.enablenetworking.get_active():
+                self._markReconfigureRoot("modify_networking","enable")
+                self._markReconfigureRoot("backend_waits_for_network",self.delaystartbox.get_active_text())
+                if self.delaystartbox.get_active_text() == "Ping":
+                    self._markReconfigureRoot("ping_location",self.pingentry.get_text())
+            else:
+                self._markReconfigureRoot("modify_networking","disable")
+        if self.delaybackendstart_state and self.enablenetworking.get_active(): # Networking was enabled and is still enabled
+            reconfig_delay_method = False
+            if self.delaymethod_state != self.delaystartbox.get_active(): # The delay method is changing
+                reconfig_delay_method = True
+            if self.delaymethod_state == 1 and self.delaystartbox.get_active() == 1: # The delay method was and still is Ping
+                if self.pingentry_state != self.pingentry.get_text(): # The ping location is changing
+                    reconfig_delay_method = True
+            if reconfig_delay_method:
+                self._markReconfigureRoot("modify_networking","delaymethod")
+                self._markReconfigureRoot("backend_waits_for_network",self.delaystartbox.get_active_text())
+                if self.delaystartbox.get_active_text() == "Ping":
+                    self._markReconfigureRoot("ping_location",self.pingentry.get_text())
         if self.stopbackend_state != self.stopbackend.get_active():
             self._markReconfigureRoot("stop_backend",self.stopbackend.get_active())
         if self.runsetupasmythtv_state != self.runsetupasmythtv.get_active():
@@ -94,30 +154,103 @@ class SetupPlugin(MCPPlugin):
         for item in reconfigure:
             if item == "user_in_mythtv_group":
                 subprocess.run(reconfigure["user_in_mythtv_group"], shell=True)
-            if item == "delay_backend_start":
-                if reconfigure[item]:
-                    if not os.path.exists('/etc/systemd/system/mythtv-backend.service.d'):
-                        os.makedirs('/etc/systemd/system/mythtv-backend.service.d')
-                    with open('/etc/systemd/system/mythtv-backend.service.d/override.conf', 'w') as txt_file:
-                        txt_file.write('[Unit]\n')
-                        txt_file.write('After=network-online.target\n')
-                        txt_file.write('Wants=network-online.target\n')
-                        txt_file.write('[Service]\n')
-                        txt_file.write('ExecStartPre=/bin/sleep 5')
-                    subprocess.run(['systemctl', 'daemon-reload'])
+            if item == "modify_networking":
+                edit_mysql_cnf = False
+                if reconfigure[item] == "delaymethod":
+                    subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
+                if reconfigure[item] == "enable" or reconfigure[item] == "delaymethod":
+                    delaymethod = reconfigure["backend_waits_for_network"]
+                    if delaymethod == "Basic":
+                        self.emit_progress("Setting MythTV Backend to start after network is up", 10)
+                        time.sleep(2)
+                        if not os.path.exists('/etc/systemd/system/mythtv-backend.service.d'):
+                            os.makedirs('/etc/systemd/system/mythtv-backend.service.d')
+                        with open('/etc/systemd/system/mythtv-backend.service.d/override.conf', 'w') as txt_file:
+                            txt_file.write('[Unit]\n')
+                            txt_file.write('After=network-online.target\n')
+                            txt_file.write('Wants=network-online.target\n')
+                            txt_file.write('[Service]\n')
+                            txt_file.write('ExecStartPre=/bin/sleep 5')
+                        subprocess.run(['systemctl', 'daemon-reload'])
+                        if reconfigure[item] == "enable":
+                            edit_mysql_cnf = True
+                    if delaymethod == "Ping":
+                        pinginput = reconfigure["ping_location"]
+                        self.emit_progress("Attempting to ping device at " + pinginput, 10)
+                        time.sleep(2)
+                        pingable = subprocess.run(['/usr/local/bin/wait-until-pingable.py', pinginput, '15']).returncode
+                        if pingable == 0:
+                            self.emit_progress("Setting MythTV Backend to start after pinging device", 50)
+                            time.sleep(2)
+                            if not os.path.exists('/etc/systemd/system/mythtv-backend.service.d'):
+                                os.makedirs('/etc/systemd/system/mythtv-backend.service.d')
+                            with open('/etc/systemd/system/mythtv-backend.service.d/override.conf', 'w') as txt_file:
+                                txt_file.write('[Unit]\n')
+                                txt_file.write('After=network.target\n')
+                                txt_file.write('[Service]\n')
+                                cmd = 'ExecStartPre=+/bin/bash -c "/usr/local/bin/wait-until-pingable.py ' + pinginput + ' 30"'
+                                txt_file.write(cmd)
+                            subprocess.run(['systemctl', 'daemon-reload'])
+                            if reconfigure[item] == "enable":
+                                edit_mysql_cnf = True
+                        else:
+                            self.emit_progress("Unable to ping device at provided location", 0)
+                            time.sleep(2)
+                    if delaymethod == "HDHomeRun":
+                        self.emit_progress("Attempting to discover HDHomeRun device", 10)
+                        time.sleep(2)
+                        if not shutil.which("hdhomerun_config"):
+                            self.emit_progress("hdhomerun_config is required but not currently installed", 0)
+                            time.sleep(2)
+                        elif not subprocess.run(['/usr/local/bin/hdhomerun.sh']).returncode == 0:
+                            self.emit_progress("Unable to find HDHomeRun device", 0)
+                            time.sleep(2)
+                        else:
+                            self.emit_progress("Setting MythTV Backend to start after HDHomeRun is discoverable", 50)
+                            time.sleep(2)
+                            if not os.path.exists('/etc/systemd/system/mythtv-backend.service.d'):
+                                os.makedirs('/etc/systemd/system/mythtv-backend.service.d')
+                            with open('/etc/systemd/system/mythtv-backend.service.d/override.conf', 'w') as txt_file:
+                                txt_file.write('[Unit]\n')
+                                txt_file.write('After=network.target\n')
+                                txt_file.write('[Service]\n')
+                                txt_file.write('ExecStartPre=/bin/bash -c "/usr/local/bin/hdhomerun.sh"')
+                            subprocess.run(['systemctl', 'daemon-reload'])
+                            if reconfigure[item] == "enable":
+                                edit_mysql_cnf = True
+                    if reconfigure[item] == "delaymethod":
+                        self.emit_progress("Done", 100)
+                        time.sleep(2)
+                    if edit_mysql_cnf:
+                        self.emit_progress("Enabling networking", 80)
+                        time.sleep(2)
+                        if os.path.exists('/etc/mysql/conf.d/mythtv.cnf'):
+                            cnf_file = open("/etc/mysql/conf.d/mythtv.cnf", "r")
+                            new_cnf_file = ""
+                            for line in cnf_file:
+                                stripped_line = line.strip()
+                                new_line = stripped_line.replace("#bind-address=::", "bind-address=::")
+                                new_cnf_file += new_line +"\n"
+                            cnf_file.close()
+                            writing_file = open("/etc/mysql/conf.d/mythtv.cnf", "w")
+                            writing_file.write(new_cnf_file)
+                            writing_file.close()
+                            self.emit_progress("Done", 100)
+                            time.sleep(2)
+                if reconfigure[item] == "disable":
+                    if os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
+                        subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
                     if os.path.exists('/etc/mysql/conf.d/mythtv.cnf'):
                         cnf_file = open("/etc/mysql/conf.d/mythtv.cnf", "r")
                         new_cnf_file = ""
                         for line in cnf_file:
                             stripped_line = line.strip()
-                            new_line = stripped_line.replace("#bind-address=::", "bind-address=::")
+                            new_line = stripped_line.replace("bind-address=::", "#bind-address=::")
                             new_cnf_file += new_line +"\n"
                         cnf_file.close()
                         writing_file = open("/etc/mysql/conf.d/mythtv.cnf", "w")
                         writing_file.write(new_cnf_file)
                         writing_file.close()
-                elif os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
-                    subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
             if item == "stop_backend":
                 subprocess.run(['systemctl', 'stop', 'mythtv-backend'])
             if item == "run_setup_as_mythtv":
