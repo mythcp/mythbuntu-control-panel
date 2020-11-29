@@ -133,10 +133,10 @@ class SetupPlugin(MCPPlugin):
                 self._markReconfigureRoot("modify_networking","disable")
         if self.delaybackendstart_state and self.enablenetworking.get_active(): # Networking was enabled and is still enabled
             reconfig_delay_method = False
-            if self.delaymethod_state != self.delaystartbox.get_active(): # The delay method is changing
+            if self.delaymethod_state != self.delaystartbox.get_active(): # User selected different delay method
                 reconfig_delay_method = True
             if self.delaymethod_state == 1 and self.delaystartbox.get_active() == 1: # The delay method was and still is Ping
-                if self.pingentry_state != self.pingentry.get_text(): # The ping location is changing
+                if self.pingentry_state != self.pingentry.get_text(): # User entered different ping location
                     reconfig_delay_method = True
             if reconfig_delay_method:
                 self._markReconfigureRoot("modify_networking","delaymethod")
