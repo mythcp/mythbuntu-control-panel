@@ -202,7 +202,7 @@ class SetupPlugin(MCPPlugin):
                         if not shutil.which("hdhomerun_config"):
                             self.emit_progress("hdhomerun_config is required but not currently installed", 0)
                             time.sleep(2)
-                        elif not subprocess.run(['/usr/local/bin/hdhomerun.sh']).returncode == 0:
+                        elif not subprocess.run(['hdhomerun_config', 'discover']).returncode == 0:
                             self.emit_progress("Unable to find HDHomeRun device", 0)
                             time.sleep(2)
                         else:
@@ -214,7 +214,7 @@ class SetupPlugin(MCPPlugin):
                                 txt_file.write('[Unit]\n')
                                 txt_file.write('After=network.target\n')
                                 txt_file.write('[Service]\n')
-                                txt_file.write('ExecStartPre=/bin/bash -c "/usr/local/bin/hdhomerun.sh"')
+                                txt_file.write('ExecStartPre=/bin/bash -c "/usr/local/bin/hdhomerun-discover.py"')
                             subprocess.run(['systemctl', 'daemon-reload'])
                             if reconfigure[item] == "enable":
                                 edit_mysql_cnf = True
