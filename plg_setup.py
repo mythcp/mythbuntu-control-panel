@@ -178,7 +178,7 @@ class SetupPlugin(MCPPlugin):
                         pinginput = reconfigure["ping_location"]
                         self.emit_progress("Attempting to ping device at " + pinginput, 10)
                         time.sleep(2)
-                        pingable = subprocess.run(['/usr/local/bin/wait-until-pingable.py', pinginput, '15']).returncode
+                        pingable = subprocess.run(['/usr/share/mythbuntu/wait-until-pingable.py', pinginput, '15']).returncode
                         if pingable == 0:
                             self.emit_progress("Setting MythTV Backend to start after pinging device", 50)
                             time.sleep(2)
@@ -188,7 +188,7 @@ class SetupPlugin(MCPPlugin):
                                 txt_file.write('[Unit]\n')
                                 txt_file.write('After=network.target\n')
                                 txt_file.write('[Service]\n')
-                                cmd = 'ExecStartPre=+/bin/bash -c "/usr/local/bin/wait-until-pingable.py ' + pinginput + ' 30"'
+                                cmd = 'ExecStartPre=+/bin/bash -c "/usr/share/mythbuntu/wait-until-pingable.py ' + pinginput + ' 30"'
                                 txt_file.write(cmd)
                             subprocess.run(['systemctl', 'daemon-reload'])
                             if reconfigure[item] == "enable":
@@ -214,7 +214,7 @@ class SetupPlugin(MCPPlugin):
                                 txt_file.write('[Unit]\n')
                                 txt_file.write('After=network.target\n')
                                 txt_file.write('[Service]\n')
-                                txt_file.write('ExecStartPre=/bin/bash -c "/usr/local/bin/hdhomerun-discover.py"')
+                                txt_file.write('ExecStartPre=/bin/bash -c "/usr/share/mythbuntu/hdhomerun-discover.py"')
                             subprocess.run(['systemctl', 'daemon-reload'])
                             if reconfigure[item] == "enable":
                                 edit_mysql_cnf = True
