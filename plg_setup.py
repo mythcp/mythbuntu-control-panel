@@ -156,13 +156,13 @@ class SetupPlugin(MCPPlugin):
                 subprocess.run(reconfigure["user_in_mythtv_group"], shell=True)
             if item == "modify_networking":
                 edit_mysql_cnf = False
-                if reconfigure[item] == "delaymethod":
-                    subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
                 if reconfigure[item] == "enable" or reconfigure[item] == "delaymethod":
                     delaymethod = reconfigure["backend_waits_for_network"]
                     if delaymethod == "Basic":
                         self.emit_progress("Setting MythTV Backend to start after network is up", 10)
                         time.sleep(2)
+                        if os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
+                            subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
                         if not os.path.exists('/etc/systemd/system/mythtv-backend.service.d'):
                             os.makedirs('/etc/systemd/system/mythtv-backend.service.d')
                         with open('/etc/systemd/system/mythtv-backend.service.d/override.conf', 'w') as txt_file:
@@ -182,6 +182,8 @@ class SetupPlugin(MCPPlugin):
                         if pingable == 0:
                             self.emit_progress("Setting MythTV Backend to start after pinging device", 50)
                             time.sleep(2)
+                            if os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
+                                subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
                             if not os.path.exists('/etc/systemd/system/mythtv-backend.service.d'):
                                 os.makedirs('/etc/systemd/system/mythtv-backend.service.d')
                             with open('/etc/systemd/system/mythtv-backend.service.d/override.conf', 'w') as txt_file:
@@ -208,6 +210,8 @@ class SetupPlugin(MCPPlugin):
                         else:
                             self.emit_progress("Setting MythTV Backend to start after HDHomeRun is discoverable", 50)
                             time.sleep(2)
+                            if os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
+                                subprocess.run(['systemctl', 'revert', 'mythtv-backend'])
                             if not os.path.exists('/etc/systemd/system/mythtv-backend.service.d'):
                                 os.makedirs('/etc/systemd/system/mythtv-backend.service.d')
                             with open('/etc/systemd/system/mythtv-backend.service.d/override.conf', 'w') as txt_file:
