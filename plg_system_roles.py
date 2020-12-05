@@ -63,6 +63,14 @@ class SystemRolesPlugin(MCPPlugin):
             self.xmltv_installed_state=False
         if not self.primary_backend_radio.get_active():
             self.xmltv_guide_data.set_sensitive(False)
+        if shutil.which("hdhomerun_config"):
+            self.hdhomerun_c_installed_state=True
+        else:
+            self.hdhomerun_c_installed_state=False
+        if shutil.which("hdhomerun_config_gui"):
+            self.hdhomerun_c_gui_installed_state=True
+        else:
+            self.hdhomerun_c_gui_installed_state=False
 
     def applyStateToGUI(self):
         """Takes the current state information and sets the GUI
@@ -77,6 +85,8 @@ class SystemRolesPlugin(MCPPlugin):
         self.no_frontend_radio.set_active(self.no_front)
 
         self.xmltv_guide_data.set_active(self.xmltv_installed_state)
+        self.hdhomerun_config.set_active(self.hdhomerun_c_installed_state)
+        self.hdhomerun_config_gui.set_active(self.hdhomerun_c_gui_installed_state)
         
     def on_backend_select(self, widget, data=None):
         """xmltv checkbox available if primary backend selected"""
@@ -118,4 +128,13 @@ class SystemRolesPlugin(MCPPlugin):
             else:
                 self._markRemove('xmltv')
                 self._markRemove('xmltv-util')
-
+        if self.hdhomerun_config.get_active() != self.hdhomerun_c_installed_state:
+            if self.hdhomerun_config.get_active():
+                self._markInstall('hdhomerun-config')
+            else:
+                self._markRemove('hdhomerun-config')
+        if self.hdhomerun_config_gui.get_active() != self.hdhomerun_c_gui_installed_state:
+            if self.hdhomerun_config_gui.get_active():
+                self._markInstall('hdhomerun-config-gui')
+            else:
+                self._markRemove('hdhomerun-config-gui')
