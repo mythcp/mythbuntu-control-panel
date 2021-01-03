@@ -3,7 +3,7 @@
 # Mythtbuntu Control Panel is a modified version of the original MCC program
 # «plugins» - MCP and MythTV Plugin enablement plugin
 #
-# Modifications copyright (C) 2020, Ted (MythTV forums member heyted)
+# Modifications copyright (C) 2020, Ted (MythTV forum member heyted)
 # Original Copyright (C) 2009, Mario Limonciello, for Mythbuntu
 #
 #
@@ -32,22 +32,21 @@ import configparser
 from MythbuntuControlPanel.dictionaries import *
 
 class MythPluginsPlugin(MCPPlugin):
-    """A tool for enabling different MythTV plugins"""
+    """A tool for enabling MythTV plugins"""
 
     CONFIGFILE = "/etc/default/mythweb"
 
     def __init__(self):
         #Initialize parent class
         information = {}
-        information["name"] = "Plugins*"
+        information["name"] = "Plugins"
         information["icon"] = "gtk-add"
         information["ui"] = "tab_plugins"
         self.config = configparser.RawConfigParser()
         MCPPlugin.__init__(self,information)
 
-
     def captureState(self):
-        """Determines the state of the items on managed by this plugin
+        """Determines the state of the items managed by this plugin
            and stores it into the plugin's own internal structures"""
         #Dictionaries
         self.dictionary_state={}
@@ -128,14 +127,7 @@ class MythPluginsPlugin(MCPPlugin):
 
     def toggle_plugins(self,widget):
         if widget is not None:
-            if widget.get_name() == 'selectall_plugins_checkbox':
-                toggle=widget.get_active()
-                for list in get_frontend_plugin_dictionary(self), get_backend_plugin_dictionary(self):
-                    for item in list:
-                        if list[item].flags() & Gtk.SENSITIVE:
-                            list[item].set_active(toggle)
-
-            elif widget.get_name() == "mythweb_checkbox":
+            if widget.get_name() == "mythweb_checkbox":
                 self.mythweb_password_combobox1.set_sensitive(widget.get_active())
                 if not widget.get_active():
                     self.mythweb_password_combobox1.set_active(0)
