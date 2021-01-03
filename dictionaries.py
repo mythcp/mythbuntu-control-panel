@@ -45,11 +45,10 @@ def get_frontend_plugin_dictionary(self):
         "mytharchive": self.mytharchive_checkbox,                              \
         "mythbrowser": self.mythbrowser_checkbox,                              \
         "mythgame": self.mythgame_checkbox,                                    \
-        "mythgallery": self.mythgallery_checkbox,                              \
         "mythmusic": self.mythmusic_checkbox,                                  \
         "mythnews": self.mythnews_checkbox,                                    \
-        "mythnetvision": self.mythnetvision_checkbox,                          \
-        "mythweather": self.mythweather_checkbox }
+        "mythweather": self.mythweather_checkbox,                              \
+        "mythzoneminder": self.mythzoneminder_checkbox }
     return list
 
 def get_backend_plugin_dictionary(self):
