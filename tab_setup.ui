@@ -65,7 +65,7 @@
             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
             <property name="margin_top">10</property>
             <property name="label" translatable="yes">Apply this before running MythTV Backend Setup or MythTV Frontend to
-add the current user the mythtv group, and then reboot.</property>
+add the current user to the mythtv group, and then reboot.</property>
             <property name="wrap">True</property>
             <property name="xalign">0</property>
           </object>
