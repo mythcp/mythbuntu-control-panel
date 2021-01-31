@@ -51,7 +51,7 @@ class SystemRolesPlugin(MCPPlugin):
             if "backend" in item and self.dictionary_state[roles[item]]:
                 self.no_back=False
             elif "frontend" in item and self.dictionary_state[roles[item]]:
-                self.no_front=False
+                self.no_front=False  
 
         #corner case
         if self.dictionary_state[self.primary_backend_radio]:
@@ -61,6 +61,10 @@ class SystemRolesPlugin(MCPPlugin):
             self.xmltv_installed_state=True
         else:
             self.xmltv_installed_state=False
+        if self.query_installed("openssh-server"):
+            self.sshs_installed_state=True
+        else:
+            self.sshs_installed_state=False
         if not self.primary_backend_radio.get_active():
             self.xmltv_guide_data.set_sensitive(False)
         if shutil.which("hdhomerun_config"):
@@ -85,6 +89,7 @@ class SystemRolesPlugin(MCPPlugin):
         self.no_frontend_radio.set_active(self.no_front)
 
         self.xmltv_guide_data.set_active(self.xmltv_installed_state)
+        self.enablessh.set_active(self.sshs_installed_state)
         self.hdhomerun_config.set_active(self.hdhomerun_c_installed_state)
         self.hdhomerun_config_gui.set_active(self.hdhomerun_c_gui_installed_state)
         
@@ -115,19 +120,22 @@ class SystemRolesPlugin(MCPPlugin):
                 self._markInstall('mythtv-backend')
             else:
                 self._markRemove('mythtv-backend')
-
         if self.frontend_radio.get_active() != self.dictionary_state[self.frontend_radio]:
             if self.frontend_radio.get_active():
                 self._markInstall('mythtv-frontend')
             else:
                 self._markRemove('mythtv-frontend')
-
         if self.xmltv_guide_data.get_active() != self.xmltv_installed_state:
             if self.xmltv_guide_data.get_active():
                 self._markInstall('xmltv')
             else:
                 self._markRemove('xmltv')
                 self._markRemove('xmltv-util')
+        if self.enablessh.get_active() != self.sshs_installed_state:
+            if self.enablessh.get_active():
+                self._markInstall('openssh-server')
+            else:
+                self._markRemove('openssh-server')
         if self.hdhomerun_config.get_active() != self.hdhomerun_c_installed_state:
             if self.hdhomerun_config.get_active():
                 self._markInstall('hdhomerun-config')
