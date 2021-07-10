@@ -29,9 +29,10 @@ import urllib.request, urllib.error, urllib.parse
 import shutil
 import configparser
 import time
+import aptsources.sourceslist as sl # <-------------------------------------------------
 
 class MythbuntuReposPlugin(MCPPlugin):
-    """A Plugin for adding Mythbuntu Repos"""
+    """A Plugin for adding MythTV Updates and MCP repos"""
     #
     #Load GUI & Calculate Changes
     #
@@ -124,6 +125,13 @@ class MythbuntuReposPlugin(MCPPlugin):
             self.changes['MythTVUpdatesRepo'] = self.config.get("cfg", "MythTVRepo")
         except:            
             self.changes['MythTVUpdatesRepo'] = self.versions[0]
+        #MCP Updates PPA current state
+        sources = sl.SourcesList()
+        self.MCPUpdatesActivated = False # False unless determined true below
+        for entry in sources:
+            if 'ppa.launchpad.net/mythcp/mcp' in entry.str() and entry.str()[0] != "#":
+                self.MCPUpdatesActivated = True
+                break
 
     def applyStateToGUI(self):
         """Takes the current state information and sets the GUI
@@ -135,6 +143,7 @@ class MythbuntuReposPlugin(MCPPlugin):
         except ValueError:
             self.repobox.set_active(0)
         self.trunk_pass_ok.hide()
+        self.mcp_updates_checkbox.set_active(self.MCPUpdatesActivated)
 
     def on_mythtv_updates_checkbox_toggled(self, widget, data=None):
         """Show the repobox if this is checked"""
@@ -186,6 +195,8 @@ class MythbuntuReposPlugin(MCPPlugin):
                     self._markReconfigureRoot('MythTV-Updates-Activated', self.mythtv_updates_checkbox.get_active())
         if SENDLIST == True:
             self._markReconfigureRoot('Repo-list', self.versions)
+        if self.mcp_updates_checkbox.get_active() != self.MCPUpdatesActivated:
+            self._markReconfigureRoot('MCP-Updates-Activated', self.mcp_updates_checkbox.get_active())
 
     def refresh_button_clicked(self, widget, data=None):
         """Download a new db file if requested"""
@@ -229,18 +240,21 @@ class MythbuntuReposPlugin(MCPPlugin):
         """System-wide changes that need root access to be applied.
            This function is ran by the dbus backend"""
         self.emit_progress("Opening config file", 10)
+        time.sleep(1)
         if os.path.exists(self.CONFIGFILE):
             self.config.read("/etc/default/mythbuntu-repos")
         else:
             self.config.add_section("cfg")
         if "Repo-list" in reconfigure:
             self.emit_progress("Removing old repositories", 40)
+            time.sleep(1)
             for item in reconfigure["Repo-list"]:
                 if item.endswith(".x"):
                     item = item.strip(".x")
                     subprocess.call(["apt-add-repository", "-r", "-y", "ppa:mythbuntu/"+item])
         if "MythTV-Updates-Activated" in reconfigure:
             self.emit_progress("Configuring MythTV Updates repo", 60)
+            time.sleep(1)
             if reconfigure["MythTV-Updates-Activated"]:
                 repo = reconfigure["MythTV-Updates-Repo"]
                 self.config.set("cfg", "ActivateMythTVUpdates", "True")
@@ -250,8 +264,19 @@ class MythbuntuReposPlugin(MCPPlugin):
                 subprocess.call(["apt-add-repository", "-y", "ppa:mythbuntu/"+repo])
             else:
                 self.config.set("cfg", "ActivateMythTVUpdates", "False")
+        #MCP Updates PPA:
+        if "MCP-Updates-Activated" in reconfigure:
+            self.emit_progress("Configuring MCP repo", 70)
+            time.sleep(1)
+            if reconfigure["MCP-Updates-Activated"]:
+                subprocess.call(["apt-add-repository", "-y", "ppa:mythcp/mcp"])
+                self.config.set("cfg", "ActivateMCPUpdates", "True")
+            else:
+                subprocess.call(["apt-add-repository", "-r", "-y", "ppa:mythcp/mcp"])
+                self.config.set("cfg", "ActivateMCPUpdates", "False")
         with open('/etc/default/mythbuntu-repos', 'w', encoding='utf8') as configfile:
             self.emit_progress("Writing config file", 80)
+            time.sleep(1)
             self.config.write(configfile)
         self.emit_progress("Done configuring repositories", 100)
         time.sleep(2)
