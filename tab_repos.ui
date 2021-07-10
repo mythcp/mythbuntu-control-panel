@@ -92,8 +92,6 @@ available.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="xalign">0.5</property>
-                <property name="yalign">0</property>
                 <property name="draw_indicator">True</property>
                 <signal name="toggled" handler="on_mythtv_updates_checkbox_toggled" swapped="no"/>
               </object>
@@ -216,11 +214,8 @@ available.</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="label" translatable="yes">Warning: You have selected the unstable MythTV version currently in
-development!  If you select this version, it is recommended that you
-subscribe to the &lt;a href="http://www.mythtv.org/mailman/listinfo/mythtv-dev/"&gt;mythtv developer&lt;/a&gt; and &lt;a href="http://www.mythtv.org/mailman/listinfo/mythtv-commits/"&gt;mythtv commits&lt;/a&gt; mailing lists
-and be prepared for  severe breakage.  If you wish to continue, please
-enter YouMustBeThisTallToRide below for the development version
-password.</property>
+development!  To add the developmental version PPA, please enter
+YouMustBeThisTallToRide below.</property>
                     <property name="use_markup">True</property>
                     <property name="track_visited_links">False</property>
                     <property name="xalign">0</property>
@@ -329,6 +324,56 @@ password.</property>
           </packing>
         </child>
         <child>
+          <object class="GtkAlignment" id="mythtv_updates_alignment1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <property name="xscale">0</property>
+            <property name="yscale">0</property>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">The Mythbuntu Control Panel repository is updated for the latest 
+Ubuntu long term support (LTS) version.  </property>
+                <property name="xalign">0</property>
+                <property name="yalign">0</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">6</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkAlignment" id="mcp_updates_ckbox_alignment">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <property name="xscale">0</property>
+            <property name="yscale">0</property>
+            <property name="left_padding">25</property>
+            <child>
+              <object class="GtkCheckButton" id="mcp_updates_checkbox">
+                <property name="label" translatable="yes">Activate Mythbuntu Control Panel repository</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">7</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkHSeparator" id="hseparator5">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -337,7 +382,7 @@ password.</property>
             <property name="expand">False</property>
             <property name="fill">False</property>
             <property name="padding">6</property>
-            <property name="position">12</property>
+            <property name="position">13</property>
           </packing>
         </child>
         <child>
@@ -348,9 +393,8 @@ password.</property>
               <object class="GtkLabel" id="complete_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">After hitting apply to complete the transition to the selected MythTV
-Updates repository, please open update-manager (Software Updater)
-to check for updates.</property>
+                <property name="label" translatable="yes">After hitting apply to complete the transition to the selected repositories,
+please open update-manager (Software Updater) to check for updates.</property>
                 <property name="xalign">0</property>
                 <property name="yalign">0</property>
               </object>
@@ -359,7 +403,7 @@ to check for updates.</property>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">13</property>
+            <property name="position">14</property>
           </packing>
         </child>
       </object>
