@@ -29,7 +29,7 @@ import urllib.request, urllib.error, urllib.parse
 import shutil
 import configparser
 import time
-import aptsources.sourceslist as sl # <-------------------------------------------------
+import aptsources.sourceslist as sl
 
 class MythbuntuReposPlugin(MCPPlugin):
     """A Plugin for adding MythTV Updates and MCP repos"""
