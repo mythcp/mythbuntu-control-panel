@@ -3,7 +3,7 @@
 # Mythtbuntu Control Panel is a modified version of the original MCC program
 # «startup_behavior» - MCP startup options plugin
 #
-# Modifications copyright (C) 2020, Ted (MythTV forums member heyted)
+# Modifications copyright (C) 2020, Ted (MythTV Forum member heyted)
 # Original copyright (C) 2009, Mario Limonciello, for Mythbuntu
 #
 # This is free software; you can redistribute it and/or modify it under
@@ -24,10 +24,10 @@
 from MythbuntuControlPanel.plugin import MCPPlugin
 import os
 import string
-import re
+import re, grp, getpass
 
 class LoginPlugin(MCPPlugin):
-    """A plugin for setting up automatic login"""
+    """A plugin for startup options"""
 
     def __init__(self):
         #Initialize parent class
@@ -39,22 +39,42 @@ class LoginPlugin(MCPPlugin):
         MCPPlugin.__init__(self,information)
 
     def captureState(self):
-        """Determines the state of the items on managed by this plugin
+        """Determines the state of the items managed by this plugin
            and stores it into the plugin's own internal structures"""
         self.autostart_state=os.path.exists(os.environ['HOME'] + '/.config/autostart/mythtv.desktop')
+        self.directstart_state=False
+        if os.path.exists("/usr/share/applications/mythtv.desktop"):
+            desktopfile = open("/usr/share/applications/mythtv.desktop", "r")
+            for line in desktopfile:
+                if 'mythfrontend.real' in line:
+                    self.directstart_state=True
+                    break
+            desktopfile.close()
+        self.ingroup_state=False #Current user is not in mythtv group unless found in group below
+        current_user = getpass.getuser()
+        groups = grp.getgrall()
+        for group in groups:
+            if group.gr_name == "mythtv" and current_user in group.gr_mem:
+                self.ingroup_state=True #Current user is in mythtv group
+                break
 
     def applyStateToGUI(self):
         """Takes the current state information and sets the GUI
            for this plugin"""
         self.enableautostartup.set_active(self.autostart_state)
+        self.enablestartdirect.set_active(self.directstart_state)
+        if not self.ingroup_state:
+            self.enableautostartup.set_sensitive(False)
+            self.enablestartdirect.set_sensitive(False)
 
     def compareState(self):
         """Determines what items have been modified on this plugin"""
         #Prepare for state capturing
         MCPPlugin.clearParentState(self)
-
         if self.autostart_state != self.enableautostartup.get_active():
             self._markReconfigureUser("autostartup",self.enableautostartup.get_active())
+        if self.directstart_state != self.enablestartdirect.get_active():
+            self._markReconfigureRoot("directstart",self.enablestartdirect.get_active())
 
     def user_scripted_changes(self,reconfigure):
         """Local changes that can be performed by the user account.
@@ -73,3 +93,33 @@ class LoginPlugin(MCPPlugin):
                             os.symlink('/usr/share/applications/mythtv.desktop',home + '/.config/autostart/mythtv.desktop')
                 elif os.path.exists(home + '/.config/autostart/mythtv.desktop'):
                     os.remove(home + '/.config/autostart/mythtv.desktop')
+
+    def root_scripted_changes(self,reconfigure):
+        """System-wide changes that need root access to be applied.
+           This function is ran by the dbus backend"""
+        for item in reconfigure:
+            if item == "directstart":
+                if reconfigure[item]:
+                    if os.path.exists('/usr/share/applications/mythtv.desktop'):
+                        desktop_file = open("/usr/share/applications/mythtv.desktop", "r")
+                        new_desktop_file = ""
+                        for line in desktop_file:
+                            stripped_line = line.strip()
+                            new_line = stripped_line.replace("Exec=mythfrontend --service", "Exec=mythfrontend.real --syslog local7")
+                            new_desktop_file += new_line +"\n"
+                        desktop_file.close()
+                        writing_file = open("/usr/share/applications/mythtv.desktop", "w")
+                        writing_file.write(new_desktop_file)
+                        writing_file.close()
+                else:
+                    if os.path.exists('/usr/share/applications/mythtv.desktop'):
+                        desktop_file = open("/usr/share/applications/mythtv.desktop", "r")
+                        new_desktop_file = ""
+                        for line in desktop_file:
+                            stripped_line = line.strip()
+                            new_line = stripped_line.replace("Exec=mythfrontend.real --syslog local7", "Exec=mythfrontend --service")
+                            new_desktop_file += new_line +"\n"
+                        desktop_file.close()
+                        writing_file = open("/usr/share/applications/mythtv.desktop", "w")
+                        writing_file.write(new_desktop_file)
+                        writing_file.close()
