@@ -233,7 +233,7 @@ class RemotesPlugin(MCPPlugin):
                 else:
                     self.emit_progress('Removing MCP Remote', 50)
                     time.sleep(1)
-                    subprocess.run(['dpkg', '-r', 'mcpremote])
+                    subprocess.run(['dpkg', '-r', 'mcpremote'])
                     if os.path.exists("/usr/share/applications/mcpremote.desktop"):
                         os.remove("/usr/share/applications/mcpremote.desktop")
                     if os.path.exists("/usr/bin/mcpremote"):
