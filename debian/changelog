@@ -1,0 +1,191 @@
+mythbuntu-control-panel (20211127-1) focal; urgency=medium
+
+  * Add Remotes tab
+
+ -- Ted L <ted1193-lp@yahoo.com>  Tue, 27 Nov 2021 08:00:00 -0500
+
+mythbuntu-control-panel (20210803-1) focal; urgency=medium
+
+  * Add ability to directly start mythfrontend.real
+
+ -- Ted L <ted1193-lp@yahoo.com>  Tue, 03 Aug 2021 08:00:00 -0500
+
+mythbuntu-control-panel (20210711-1) focal; urgency=medium
+
+  * Add ability to activate MCP PPA
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sun, 11 Jul 2021 08:00:00 -0500
+
+mythbuntu-control-panel (20210612-1) focal; urgency=medium
+
+  * Added aptdaemon and python3-aptdaemon.gtk3widgets to debian control file
+
+ -- Ted L <ted1193-lp@yahoo.com>  Wed, 12 Jun 2021 08:00:00 -0500
+
+mythbuntu-control-panel (20210504-1) focal; urgency=medium
+
+  * Added Hirsute (21.04) to repos DB file
+
+ -- Ted L <ted1193-lp@yahoo.com>  Tue, 04 May 2021 21:08:00 -0500
+
+mythbuntu-control-panel (20210131-1) focal; urgency=medium
+
+  * Added option to enable SSH access
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sun, 31 Jan 2021 08:00:00 -0500
+
+mythbuntu-control-panel (20210104-1) focal; urgency=medium
+
+  * Edited main dialog box wording
+
+ -- Ted L <ted1193-lp@yahoo.com>  Mon, 04 Jan 2021 18:20:00 -0500
+
+mythbuntu-control-panel (20210103-1) focal; urgency=medium
+
+  * Removed developmental tab
+  * Made plugins module stable
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sun, 03 Jan 2021 10:05:00 -0500
+
+mythbuntu-control-panel (20201205-1) focal; urgency=medium
+
+  * Minor bug fix
+  * Added ability to install hdhomerun_config and hdhomerun_config_gui
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sat, 05 Dec 2020 14:30:00 -0500
+
+mythbuntu-control-panel (20201201-1) focal; urgency=medium
+
+  * Changed networking script paths
+  * Replaced HDHomeRun discover Shell script with Python script
+
+ -- Ted L <ted1193-lp@yahoo.com>  Tue, 01 Dec 2020 18:30:00 -0500
+
+mythbuntu-control-panel (20201129-1) focal; urgency=medium
+
+  * Added two methods to start backend after network is up
+  * Uninstall xmltv-util if xmltv is uninstalled
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sun, 29 Nov 2020 09:00:00 -0500
+
+mythbuntu-control-panel (20201024-1) focal; urgency=medium
+
+  * Added Groovy (20.10) to repos DB file
+  * Added close button to progress indicator
+  * Bug fix - Handle outdated repos DB file
+
+ -- Ted L <ted1193-lp@yahoo.com>  Wed, 24 Oct 2020 21:00:00 -0400
+
+mythbuntu-control-panel (20200909-1) focal; urgency=medium
+
+  * Added option to run mythtv-setup using mythtv user
+  * Added ability to install xmltv
+  * Stopping the backend is now a separate option instead of being done when clicking Launch Backend Setup button
+
+ -- Ted L <ted1193-lp@yahoo.com>  Wed, 09 Sep 2020 20:04:08 -0400
+
+mythbuntu-control-panel (20200708-2) focal; urgency=medium
+
+  * Added python3 dependency in debian control file
+
+ -- Ted L <ted1193-lp@yahoo.com>  Tue, 28 Jul 2020 21:01:08 -0400
+
+mythbuntu-control-panel (20200708-1) focal; urgency=medium
+
+  * Initial mythbuntu-control-panel package for PPA
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sat, 18 Jul 2020 20:50:08 -0400
+ 
+mythbuntu-control-panel (20200510) focal; urgency=medium
+
+  * The seperate mythbuntu-common dependency was removed. 
+  * The plugin sort order was changed. 
+  * The name was changed.
+  * Language informaiton was deleted.
+  * The code was changed to indicate "MCP" and "panel" in lieu of "centre".
+  * Information was added to indicate a new source code location (github.com).
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sun, 10 May 2020 01:00:00 +0100
+
+mythbuntu-control-centre (0.64.1) trusty; urgency=medium
+
+  * Rewrite the python shebang path to /usr/bin/python3.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 20 Feb 2014 16:18:25 +0100
+
+mythbuntu-control-centre (0.64) trusty; urgency=low
+
+  [ Thomas Mashos ]
+  * Sort plugins alphabetically
+  * Fix running with Python3
+  * One item per line in summarizing
+
+  [ Mario Limonciello ]
+  * debian/control:
+    - Update for python3 stuff.
+    - drop cdbs
+    - update for current lintian.
+  * debian/rules:
+    - drop cdbs stuff
+    - don't make separate upstream and ubuntu versions.
+  * Correct an enum for APT installation.
+
+ -- Mario Limonciello <superm1@ubuntu.com>  Tue, 12 Nov 2013 01:15:52 -0600
+
+mythbuntu-control-centre (0.63-0ubuntu2) oneiric; urgency=low
+
+  * langpack.mk got dropped from cdbs in favour of dh_translations - LP: #833884
+
+ -- Marcin Juszkiewicz <marcin.juszkiewicz@linaro.org>  Wed, 31 Aug 2011 16:54:42 +0000
+
+mythbuntu-control-centre (0.63-0ubuntu1) natty; urgency=low
+
+  * Update commit_packages routine for changes in aptdaemon.
+  * Set the apt daemon dialog to always center.
+
+ -- Mario Limonciello <Mario_Limonciello@Dell.com>  Mon, 07 Feb 2011 23:54:25 -0600
+
+mythbuntu-control-centre (0.62-0ubuntu2) natty; urgency=low
+
+  * debian/control:
+    - Update bzr branches to point to ~mythbuntu-dev.
+  * Rebuild for python2.7 transition.
+
+ -- Mario Limonciello <Mario_Limonciello@Dell.com>  Wed, 02 Feb 2011 18:15:00 -0600
+
+mythbuntu-control-centre (0.62-0ubuntu1) lucid; urgency=low
+
+  * Correct some deprecation warnings from a recent python-apt upload.
+
+ -- Mario Limonciello <Mario_Limonciello@Dell.com>  Sun, 28 Mar 2010 01:21:16 -0500
+
+mythbuntu-control-centre (0.61-0ubuntu1) lucid; urgency=low
+
+  * Widget names are no longer stored in the widget's internal name, but
+    rather in the object data.  Sync this information back to the widget's
+    internal name. (LP: #503710)
+
+ -- Mario Limonciello <superm1@ubuntu.com>  Wed, 06 Jan 2010 03:23:08 -0600
+
+mythbuntu-control-centre (0.60-0ubuntu1) lucid; urgency=low
+
+  * Update for the API changes with python-aptdaemon.
+  * Update for changes with PolicyKit.
+
+ -- Mario Limonciello <superm1@ubuntu.com>  Tue, 05 Jan 2010 01:00:02 -0600
+
+mythbuntu-control-centre (0.59-0ubuntu1) lucid; urgency=low
+
+  * Introduce a "single" plugin mode.  This allows a plugin to be launched
+    without allowing switching to other plugins in the UI.
+
+ -- Mario Limonciello <superm1@ubuntu.com>  Fri, 27 Nov 2009 17:28:59 -0600
+
+mythbuntu-control-centre (0.58-0ubuntu1) lucid; urgency=low
+
+  * Add a new function to all plugins for notification during extended
+    processing.
+  * Update skeletor to show how to update the progress bar from a plugin.
+  * Update policykit to cache between runs.
+
+ -- Mario Limonciello <superm1@ubuntu.com>  Wed, 25 Nov 2009 02:17:53 -0600
