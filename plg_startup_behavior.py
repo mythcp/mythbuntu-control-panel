@@ -41,15 +41,10 @@ class LoginPlugin(MCPPlugin):
     def captureState(self):
         """Determines the state of the items managed by this plugin
            and stores it into the plugin's own internal structures"""
-        self.autostart_state=os.path.exists(os.environ['HOME'] + '/.config/autostart/mythtv.desktop')
-        self.directstart_state=False
-        if os.path.exists("/usr/share/applications/mythtv.desktop"):
-            desktopfile = open("/usr/share/applications/mythtv.desktop", "r")
-            for line in desktopfile:
-                if 'mythfrontend.real' in line:
-                    self.directstart_state=True
-                    break
-            desktopfile.close()
+        home = os.environ['HOME']
+        self.autostart_state=(os.path.exists(home + '/.config/autostart/mythtv.desktop') or 
+        os.path.exists(home + '/.config/autostart/mythfrontend_d.desktop'))
+        self.directstart_state=os.path.exists('/usr/share/applications/mythfrontend_d.desktop')
         self.ingroup_state=False #Current user is not in mythtv group unless found in group below
         current_user = getpass.getuser()
         groups = grp.getgrall()
@@ -74,7 +69,8 @@ class LoginPlugin(MCPPlugin):
         if self.autostart_state != self.enableautostartup.get_active():
             self._markReconfigureUser("autostartup",self.enableautostartup.get_active())
         if self.directstart_state != self.enablestartdirect.get_active():
-            self._markReconfigureRoot("directstart",self.enablestartdirect.get_active())
+            self._markReconfigureRoot("directstart",(self.enablestartdirect.get_active(),
+            self.enableautostartup.get_active(),os.environ['HOME']))
 
     def user_scripted_changes(self,reconfigure):
         """Local changes that can be performed by the user account.
@@ -83,43 +79,75 @@ class LoginPlugin(MCPPlugin):
             if item == 'autostartup':
                 home = os.environ['HOME']
                 if reconfigure[item]:
+                    if os.path.exists(home + '/.config/autostart/mythtv.desktop'):
+                        os.remove(home + '/.config/autostart/mythtv.desktop')
+                    if os.path.exists(home + '/.config/autostart/mythfrontend_d.desktop'):
+                        os.remove(home + '/.config/autostart/mythfrontend_d.desktop')
                     if not os.path.exists(home + '/.config/autostart'):
                         os.makedirs(home + '/.config/autostart')
-                    if not os.path.exists(home + '/.config/autostart/mythtv.desktop'):
-                        try:
-                            os.symlink('/usr/share/applications/mythtv.desktop',home + '/.config/autostart/mythtv.desktop')
-                        except OSError:
-                            os.unlink(home + '/.config/autostart/mythtv.desktop')
-                            os.symlink('/usr/share/applications/mythtv.desktop',home + '/.config/autostart/mythtv.desktop')
-                elif os.path.exists(home + '/.config/autostart/mythtv.desktop'):
-                    os.remove(home + '/.config/autostart/mythtv.desktop')
+                    if os.path.exists('/usr/share/applications/mythfrontend_d.desktop'):
+                        dtfile = '/usr/share/applications/mythfrontend_d.desktop'
+                        dtlink = '/.config/autostart/mythfrontend_d.desktop'
+                    else:
+                        dtfile = '/usr/share/applications/mythtv.desktop'
+                        dtlink = '/.config/autostart/mythtv.desktop'
+                    try:
+                        os.symlink(dtfile,home + dtlink)
+                    except OSError:
+                        os.unlink(home + dtlink)
+                        os.symlink(dtfile,home + dtlink)
+                else:
+                    if os.path.exists(home + '/.config/autostart/mythtv.desktop'):
+                        os.remove(home + '/.config/autostart/mythtv.desktop')
+                    if os.path.exists(home + '/.config/autostart/mythfrontend_d.desktop'):
+                        os.remove(home + '/.config/autostart/mythfrontend_d.desktop')
 
     def root_scripted_changes(self,reconfigure):
         """System-wide changes that need root access to be applied.
            This function is ran by the dbus backend"""
         for item in reconfigure:
             if item == "directstart":
-                if reconfigure[item]:
+                home = reconfigure[item][2]
+                if reconfigure[item][0]:
                     if os.path.exists('/usr/share/applications/mythtv.desktop'):
                         desktop_file = open("/usr/share/applications/mythtv.desktop", "r")
                         new_desktop_file = ""
                         for line in desktop_file:
                             stripped_line = line.strip()
-                            new_line = stripped_line.replace("Exec=mythfrontend --service", "Exec=mythfrontend.real --syslog local7")
+                            new_line = stripped_line.replace("Name=MythTV Frontend",
+                            "Name=MythTV Direct Frontend")
+                            new_line = new_line.replace("Exec=mythfrontend --service",
+                            "Exec=mythfrontend.real --syslog local7")
                             new_desktop_file += new_line +"\n"
                         desktop_file.close()
-                        writing_file = open("/usr/share/applications/mythtv.desktop", "w")
+                        writing_file = open("/usr/share/applications/mythfrontend_d.desktop", "w")
                         writing_file.write(new_desktop_file)
                         writing_file.close()
+                        if reconfigure[item][1]:
+                            if os.path.exists(home + '/.config/autostart/mythtv.desktop'):
+                                os.remove(home + '/.config/autostart/mythtv.desktop')
+                            if os.path.exists(home + '/.config/autostart/mythfrontend_d.desktop'):
+                                os.remove(home + '/.config/autostart/mythfrontend_d.desktop')
+                            try:
+                                os.symlink('/usr/share/applications/mythfrontend_d.desktop',
+                                home + '/.config/autostart/mythfrontend_d.desktop')
+                            except OSError:
+                                os.unlink(home + '/.config/autostart/mythfrontend_d.desktop')
+                                os.symlink('/usr/share/applications/mythfrontend_d.desktop',
+                                home + '/.config/autostart/mythfrontend_d.desktop')
                 else:
+                    if os.path.exists(home + '/.config/autostart/mythfrontend_d.desktop'):
+                        os.remove(home + '/.config/autostart/mythfrontend_d.desktop')
+                    if os.path.exists('/usr/share/applications/mythfrontend_d.desktop'):
+                        os.remove('/usr/share/applications/mythfrontend_d.desktop')
                     if os.path.exists('/usr/share/applications/mythtv.desktop'):
-                        desktop_file = open("/usr/share/applications/mythtv.desktop", "r")
-                        new_desktop_file = ""
-                        for line in desktop_file:
-                            stripped_line = line.strip()
-                            new_line = stripped_line.replace("Exec=mythfrontend.real --syslog local7", "Exec=mythfrontend --service")
-                            new_desktop_file += new_line +"\n"
-                        desktop_file.close()
-                        writing_file = open("/usr/share/applications/mythtv.desktop", "w")
-                        writing_file.write(new_desktop_file)
-                        writing_file.close()
+                        if reconfigure[item][1]:
+                            if os.path.exists(home + '/.config/autostart/mythtv.desktop'):
+                                os.remove(home + '/.config/autostart/mythtv.desktop')
+                            try:
+                                os.symlink('/usr/share/applications/mythtv.desktop',
+                                home + '/.config/autostart/mythtv.desktop')
+                            except OSError:
+                                os.unlink(home + '/.config/autostart/mythtv.desktop')
+                                os.symlink('/usr/share/applications/mythtv.desktop',
+                                home + '/.config/autostart/mythtv.desktop')
