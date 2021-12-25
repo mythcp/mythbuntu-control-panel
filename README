@@ -17,7 +17,7 @@ tasks using the command line to configure the system.
 MCP retains MCC's "fully pluggable" architecture.  This means that all
 functionality is actually configurable by the plugins that get installed
 in the standard location rather than with the core application.  This allows
-developers to create their own sets of plugins to be used with the MCP.
+developers to create their own sets of plugins to be used with MCP.
  
 MCP is community maintained and not endorsed by Canonical.
 
