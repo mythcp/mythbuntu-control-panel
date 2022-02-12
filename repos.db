@@ -1,4 +1,4 @@
-MYTHTV_RELEASE	31
+MYTHTV_RELEASE	32
 TRUNKPASS	YouMustBeThisTallToRide
 URL	https://raw.githubusercontent.com/mythcp/mythbuntu-control-panel/master/repos.db
 
@@ -62,14 +62,21 @@ cosmic	30
 disco	30
 eoan	30
 bionic	31
+cosmic	31
 disco	31
 eoan	31
 focal	31
 groovy	31
 hirsute	31
 impish	31
+jammy	31
 bionic	32
+eoan	32
 focal	32
 groovy	32
 hirsute	32
 impish	32
+jammy	32
+focal	33
+impish	33
+jammy	33
