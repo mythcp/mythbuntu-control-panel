@@ -211,10 +211,12 @@ class MythbuntuReposPlugin(MCPPlugin):
         except:
             url = 'https://raw.githubusercontent.com/mythcp/mythbuntu-control-panel/master/repos.db'
         try:
-            self.emit_progress("Refreshing available repos from server", 0)
-            time.sleep(.5)
+            self.emit_progress("_", 0) #init (to do: remove)
+            time.sleep(0.1)
             import urllib.request
             from urllib.error import HTTPError,URLError
+            self.emit_progress("Refreshing available repos from server", 20)
+            time.sleep(1)
             # Open the url
             f = urllib.request.urlopen(url)
             # Open our local file for writing
@@ -231,6 +233,7 @@ class MythbuntuReposPlugin(MCPPlugin):
             print("URL Error:",e.reason , url)
             self.emit_progress("URL Error: Failed to download new DB file", 0)
         time.sleep(2)
+        self.emit_progress("_", 'done')
 
     #
     # Process selected activities
