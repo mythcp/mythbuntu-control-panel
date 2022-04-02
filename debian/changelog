@@ -1,3 +1,9 @@
+mythbuntu-control-panel (20220402-1) jammy; urgency=medium
+
+  * Improve progress indicator
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sat, 02 Apr 2022 08:00:00 -0400
+
 mythbuntu-control-panel (20211226-1) focal; urgency=medium
 
   * Fix directly starting frontend
@@ -27,12 +33,6 @@ mythbuntu-control-panel (20210612-1) focal; urgency=medium
   * Added aptdaemon and python3-aptdaemon.gtk3widgets to debian control file
 
  -- Ted L <ted1193-lp@yahoo.com>  Wed, 12 Jun 2021 08:00:00 -0500
-
-mythbuntu-control-panel (20210504-1) focal; urgency=medium
-
-  * Added Hirsute (21.04) to repos DB file
-
- -- Ted L <ted1193-lp@yahoo.com>  Tue, 04 May 2021 21:08:00 -0500
 
 mythbuntu-control-panel (20210131-1) focal; urgency=medium
 
@@ -76,7 +76,6 @@ mythbuntu-control-panel (20201129-1) focal; urgency=medium
 
 mythbuntu-control-panel (20201024-1) focal; urgency=medium
 
-  * Added Groovy (20.10) to repos DB file
   * Added close button to progress indicator
   * Bug fix - Handle outdated repos DB file
 
