@@ -316,11 +316,14 @@ class ControlPanel():
     def update_progressbar(self,progress_text,progress):
         """Updates the progressbar to show what we are working on"""
         self.progress_dialog.show()
-        self.progressbar.set_fraction(float(progress)/100)
-        if progress_text != None:
-            self.action.set_markup("<i>"+_(progress_text)+"</i>")
-        while Gtk.events_pending():
-            Gtk.main_iteration()
+        if progress == 'done':
+            self.progress_dialog.hide()
+        else:
+            self.progressbar.set_fraction(float(progress)/100)
+            if progress_text != None:
+                self.action.set_markup("<i>"+_(progress_text)+"</i>")
+            while Gtk.events_pending():
+                Gtk.main_iteration()
         return True
 
     def display_error(self,message,secondary=None,title=_("Error")):
