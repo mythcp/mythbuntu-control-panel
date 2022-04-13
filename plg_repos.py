@@ -129,7 +129,7 @@ class MythbuntuReposPlugin(MCPPlugin):
         sources = sl.SourcesList()
         self.MCPUpdatesActivated = False # False unless determined true below
         for entry in sources:
-            if 'ppa.launchpad.net/mythcp/mcp' in entry.str() and entry.str()[0] != "#":
+            if '/mythcp/mcp/' in entry.str() and entry.str()[0] != "#":
                 self.MCPUpdatesActivated = True
                 break
 
