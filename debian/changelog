@@ -1,8 +1,9 @@
-mythbuntu-control-panel (20220402-1) jammy; urgency=medium
+mythbuntu-control-panel (20220413-1) jammy; urgency=medium
 
   * Improve progress indicator
+  * Ubuntu 22.04 apt sources list compatibility
 
- -- Ted L <ted1193-lp@yahoo.com>  Sat, 02 Apr 2022 08:00:00 -0400
+ -- Ted L <ted1193-lp@yahoo.com>  Wed, 13 Apr 2022 08:00:00 -0400
 
 mythbuntu-control-panel (20211226-1) focal; urgency=medium
 
