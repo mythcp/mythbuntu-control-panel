@@ -233,7 +233,10 @@ class SetupPlugin(MCPPlugin):
                             new_cnf_file = ""
                             for line in cnf_file:
                                 stripped_line = line.strip()
-                                new_line = stripped_line.replace("#bind-address=::", "bind-address=::")
+                                if 'bind-address' in stripped_line:
+                                    new_line = 'bind-address=*'
+                                else:
+                                    new_line = stripped_line
                                 new_cnf_file += new_line +"\n"
                             cnf_file.close()
                             writing_file = open("/etc/mysql/conf.d/mythtv.cnf", "w")
@@ -249,7 +252,10 @@ class SetupPlugin(MCPPlugin):
                         new_cnf_file = ""
                         for line in cnf_file:
                             stripped_line = line.strip()
-                            new_line = stripped_line.replace("bind-address=::", "#bind-address=::")
+                            if 'bind-address' in stripped_line:
+                                new_line = '#' + stripped_line
+                            else:
+                                new_line = stripped_line
                             new_cnf_file += new_line +"\n"
                         cnf_file.close()
                         writing_file = open("/etc/mysql/conf.d/mythtv.cnf", "w")
