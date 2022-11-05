@@ -30,7 +30,7 @@ class SetupPlugin(MCPPlugin):
         #Initialize parent class
         information = {}
         information["name"] = "Setup"
-        information["icon"] = "gnome-settings"
+        information["icon"] = "preferences-desktop"
         information["ui"] = "tab_setup"
         MCPPlugin.__init__(self,information)
 
