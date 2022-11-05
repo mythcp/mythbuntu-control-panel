@@ -32,7 +32,7 @@ class SystemRolesPlugin(MCPPlugin):
         #Initialize parent class
         information = {}
         information["name"] = "System Roles"
-        information["icon"] = "gnome-monitor"
+        information["icon"] = "utilities-system-monitor"
         information["ui"] = "tab_system_roles"
         MCPPlugin.__init__(self,information)
 
