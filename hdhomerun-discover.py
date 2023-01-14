@@ -1,15 +1,13 @@
-#!/usr/bin/python3
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-""" See if the HD Homerun box is accessible and running
+""" See if the HDHomeRun box is accessible and running
 
 Can be called with a optional IP address(s) for users that
 have multiple HDHRs that have STATIC addresses.
 
 Expects a writable log file in /tmp named hdhr_discovery.log.
-Owner:group = mythtv:mythtv and mode = 664. If your user is a
-member of the mythtv group, then this can be run by you from
-the command line assuming the permissions are 0664.
+Owner:group = mythtv:mythtv and mode = 664.
 
 Exit codes are:
 
@@ -95,7 +93,7 @@ def main(ip_address, logfile):
         print('%s is not writable, aborting!' % logfile)
         sys.exit(3)
 
-    logger.info('Starting HD Homerun discovery')
+    logger.info('Starting HDHomeRun discovery')
 
     start = datetime.utcnow()
 
@@ -123,12 +121,12 @@ def main(ip_address, logfile):
             logger.warning('%s got an unexpected response.', command)
             sleep(DELAY)
         else:
-            logger.info('Found HD Homerun%s. Seconds=%s, attempts=%d.',
+            logger.info('Found HDHomeRun%s. Seconds=%s, attempts=%d.',
                         '' if ip_address is None else (' for ' + ip_address),
                         get_elapsed_time(start), attempt)
             return 0
 
-    logger.error('Could not find any HD Homerun%s. Seconds=%s, attempts=%d.',
+    logger.error('Could not find any HDHomeRun%s. Seconds=%s, attempts=%d.',
                  '' if ip_address is None else (' for ' + ip_address),
                  get_elapsed_time(start), attempt)
 
