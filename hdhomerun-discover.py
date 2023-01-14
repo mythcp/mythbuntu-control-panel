@@ -128,7 +128,7 @@ def main(ip_address, logfile):
                         get_elapsed_time(start), attempt)
             return 0
 
-    logger.error('Couldn\'t find any HD Homerun%s. Seconds=%s, attempts=%d.',
+    logger.error('Could not find any HD Homerun%s. Seconds=%s, attempts=%d.',
                  '' if ip_address is None else (' for ' + ip_address),
                  get_elapsed_time(start), attempt)
 
