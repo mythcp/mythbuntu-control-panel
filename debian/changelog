@@ -1,3 +1,9 @@
+mythbuntu-control-panel (20230114-1) jammy; urgency=medium
+
+  * Improve HDHomeRun discovery
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sat, 14 Jan 2023 07:00:00 -0500
+
 mythbuntu-control-panel (20220618-1) jammy; urgency=medium
 
   * Improve mythtv.cnf modification
