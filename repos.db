@@ -1,13 +1,7 @@
-MYTHTV_RELEASE	32
+MYTHTV_RELEASE	33
 TRUNKPASS	YouMustBeThisTallToRide
 URL	https://raw.githubusercontent.com/mythcp/mythbuntu-control-panel/master/repos.db
 
-nadia	0.25
-precise	0.25
-maya	0.25
-oneiric	0.25
-natty	0.25
-lucid	0.25
 raring	0.26
 olivia	0.26
 nadia	0.26
@@ -76,3 +70,8 @@ focal	33
 impish	33
 jammy	33
 kinetic	33
+lunar	33
+focal	34
+jammy	34
+kinetic	34
+lunar	34
