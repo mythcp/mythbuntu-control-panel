@@ -1,148 +1,194 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-""" See if the HDHomeRun box is accessible and running
+""" See if the HDHomerun box(s) are accessible and running
 
-Can be called with a optional IP address(s) for users that
+Requires Python 3.6 or later.
+
+For backends started by systemd, use:
+
+    sudo --preserve-env systemctl edit --force mythtv-backend.service
+
+and enter or add as needed by your service:
+
+    [Service]
+    ExecStartPre=-/usr/local/bin/hdhomerun-discover.py
+
+Can be called with optional IP address(s) for users that
 have multiple HDHRs that have STATIC addresses.
 
-Expects a writable log file in /tmp named hdhr_discovery.log.
-Owner:group = mythtv:mythtv and mode = 664.
+Use --help to see all options.
 
-Exit codes are:
+If run from the command line, then output will be to the screen.
+Otherwise, a log file in /tmp named hdhr_discovery.log is made.
+Changable with the --logfile switch.
 
-    5 times the number of failing HDHRs
-    4 if the user running the program isn't what systemd is using
-    3 if the logfile isn't writable
-    2 for a keyboard interrupt
-    1 no discovery output or IPv4 and IPv6 address found
-    0 if all HDHR(s) are found (success case)
+Exit codes:
+
+    0 = success (for *ALL* HDHRs if multiple IPs were specified)
+    1 = no output from the hdhomerun_config discover command
+    2 = IPv4 and IPv6 addresses found, disable IPv6 on NIC
+    3 = logfile is not writable, delete it and try again
+    4 = keyboard interrupt
+    5 x the number of HDHRs = HDHR is most likely not up
+
 """
 
-__version__ = '1.14'
+__version__ = '1.28'
 
 import argparse
-import getpass
+import signal
 import subprocess
 import sys
-import logging
-from time import sleep
 from datetime import datetime
+from os.path import basename
+from os import _exit
+from time import sleep
 
-ATTEMPTS = 21
-DELAY = 2
+
+# pylint: disable=too-many-arguments,unused-argument
+def keyboard_interrupt_handler(sigint, frame):
+    ''' Handle all KeyboardInterrupts here. And, just leave. '''
+    _exit(4)
+# pylint: enable=unused-argument
 
 
-# pylint: disable=consider-using-f-string,consider-using-with
 def get_program_arguments():
     ''' Process the command line. '''
 
     parser = argparse.ArgumentParser(description='HDHR Access Test',
-                                     epilog='*  Default values are in ()s.')
+                                     epilog='*  Default values are in ()s')
 
-    parser.add_argument('IP_ADDRESSES', type=str, metavar='<IP>', default=None,
-                        nargs='*', help='Optional IP address(s) (%(default)s)')
+    parser.add_argument('HOSTS', type=str,  default=None, nargs='*',
+                        help='optional hostname(s)/IP(s) (%(default)s)')
+
+    parser.add_argument('--attempts', default=20, type=int, metavar='<num>',
+                        help='number of tries to find HDHRs (%(default)i)')
+
+    parser.add_argument('--debug', action='store_true',
+                        help='output additional information (%(default)s)')
 
     parser.add_argument('--logfile', default='/tmp/hdhr_discovery.log',
                         type=str, metavar='<lf>',
-                        help='Location of log file (%(default)s)')
+                        help='optional path + name of log file (%(default)s)')
+
+    parser.add_argument('--sleep', default=1.5, type=float, metavar='<sec>',
+                        help='seconds betweem attempts (%(default)s)')
 
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + __version__)
 
-    return vars(parser.parse_args())
+    return parser.parse_args()
 
 
 def get_elapsed_time(start):
-    ''' Calculate the time spent waiting for the HDHR to come up '''
+    ''' Calculate the time spent waiting for the HDHR to come up. '''
 
     delta = datetime.utcnow() - start
-    rounded_delta = '{:.3f}'.format(delta.seconds +
-                                    (delta.microseconds / 1000000))
+    rounded_delta = f'{delta.seconds + (delta.microseconds / 1000000):.3f}'
     return rounded_delta
 
 
-def main(ip_address, logfile):
-    ''' Try to discover the HDHR(s) '''
+def log_or_print(loglevel, message, output):
+    ''' Add timestamp, log level then print to the selected location. '''
 
-    attempt = 0  # Shut up pylint.
-    command = ['systemctl', 'show', '--property=User', '--value',
-               'mythtv-backend.service']
+    print(datetime.now().strftime("%F %T.%f")[:-3], f'{loglevel:8}', message,
+          file=output)
 
-    systemd_user = subprocess.check_output(command, stderr=subprocess.STDOUT).\
-                                           strip().decode()
-    if not systemd_user:
-        systemd_user = 'root'
 
-    if getpass.getuser() != systemd_user:
-        print('BE running as user %s, not your user, aborting!' % systemd_user)
-        sys.exit(4)
+def last_message(loglevel, result, host, start, attempt, output):
+    ''' Common success or failure message text. '''
 
-    if ip_address is None:
-        command = ['hdhomerun_config', 'discover']
-    else:
-        command = ['hdhomerun_config', 'discover', ip_address]
+    log_or_print(loglevel, f'{result} {"at " + host  + " " if host else ""}'
+                 f'in {get_elapsed_time(start)} seconds '
+                 f'and {attempt} attempt{"s"[attempt == 1:]}\n', output)
 
-    logger = logging.getLogger(command[0])
 
-    try:
-        logging.basicConfig(filename=logfile, filemode='a',
-                            format='%(asctime)s %(levelname)s\t%(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
-    except PermissionError:
-        print('%s is not writable, aborting!' % logfile)
-        sys.exit(3)
+def check_one_device(host, args, output):
+    ''' Try to discover the HDHR(s). '''
 
-    logger.info('Starting HDHomeRun discovery')
-
+    attempt = 0
+    command = ['hdhomerun_config', 'discover']
     start = datetime.utcnow()
 
-    for attempt in range(1, ATTEMPTS):
+    if host:
+        command.append(host)
+
+    for attempt in range(1, args.attempts+1):
+
         try:
-            discovery_response = subprocess.check_output(command,
-                                    stderr=subprocess.STDOUT).decode().split()
-        except KeyboardInterrupt:
-            sys.exit(2)
+            discovery_response = subprocess.check_output(
+                command, text=True, stderr=subprocess.STDOUT).split()
         except subprocess.CalledProcessError:
-            logger.warning('%s failed, keep looking.', command[0])
-            sleep(DELAY)
+            log_or_print('WARNING', f'{command[0]}: got no response, attempt: '
+                         f'{attempt:2}', output)
+            sleep(args.sleep)
             continue
 
         if not discovery_response:
-            logger.error('No output from %s, aborting!', command)
+            log_or_print('ERROR', f'No output from {command[0]}, aborting!',
+                         output)
             sys.exit(1)
 
-        if len(discovery_response) > 6:
-            logger.error('%s got multiple IPs. Disable IPv6, aborting!',
-                         command)
-            sys.exit(1)
+        if args.debug:
+            log_or_print('DEBUG', f'Got: {" ".join(discovery_response)}',
+                         output)
+
+        if discovery_response.count('hdhomerun') > 1:
+            log_or_print('ERROR', f'{command[0]}: more than 1 IP, aborting!',
+                         output)
+            sys.exit(2)
 
         if discovery_response[0] != 'hdhomerun':
-            logger.warning('%s got an unexpected response.', command)
-            sleep(DELAY)
+            # Consider making this an ERROR and exiting not sleeping...
+            log_or_print('WARNING', f'{command[0]} got an unexpected response:'
+                         f' {" ".join(discovery_response)}',
+                         output)
+            sleep(args.sleep)
         else:
-            logger.info('Found HDHomeRun%s. Seconds=%s, attempts=%d.',
-                        '' if ip_address is None else (' for ' + ip_address),
-                        get_elapsed_time(start), attempt)
+            last_message('INFO', f'Found HDHR {discovery_response[2]}', host,
+                         start, attempt, output)
             return 0
 
-    logger.error('Could not find any HDHomeRun%s. Seconds=%s, attempts=%d.',
-                 '' if ip_address is None else (' for ' + ip_address),
-                 get_elapsed_time(start), attempt)
+    last_message('ERROR', 'No HDHR found', host, start, attempt, output)
 
     return 5
 
 
+def main(args, output=None):
+    ''' Control checking of one or more devices. '''
+
+    log_or_print('INFO', f'Starting {basename(__file__)} v{__version__}, '
+                 f'attempts={args.attempts}, sleep={args.sleep:.2f}', output)
+
+    if args.HOSTS:
+
+        return_value = 0
+
+        for host in args.HOSTS:
+            return_value += check_one_device(host, args, output)
+
+    else:
+        return_value = check_one_device(None, args, output)
+
+    return return_value
+
+
 if __name__ == '__main__':
+
+    signal.signal(signal.SIGINT, keyboard_interrupt_handler)
 
     ARGS = get_program_arguments()
 
-    if not ARGS['IP_ADDRESSES']:
-        RETURN_VALUE = main(None, ARGS['logfile'])
+    if sys.stdin and sys.stdin.isatty():
+        RETURN_VALUE = main(ARGS)
     else:
-        RETURN_VALUE = 0
-        for address in ARGS['IP_ADDRESSES']:
-            RETURN_VALUE += main(address, ARGS['logfile'])
+        try:
+            with open(ARGS.logfile, encoding='ascii', mode='a') as file_obj:
+                RETURN_VALUE = main(ARGS, output=file_obj)
+        except PermissionError:
+            print(f'Can\'t write to {ARGS.logfile}, aborting!')
+            sys.exit(3)
 
     sys.exit(RETURN_VALUE)
 
