@@ -2,7 +2,6 @@ MYTHTV_RELEASE	33
 TRUNKPASS	YouMustBeThisTallToRide
 URL	https://raw.githubusercontent.com/mythcp/mythbuntu-control-panel/master/repos.db
 
-raring	0.26
 olivia	0.26
 nadia	0.26
 precise	0.26
@@ -17,7 +16,6 @@ rafaela	0.27
 rebecca	0.27
 saucy	0.27
 petra	0.27
-raring	0.27
 olivia	0.27
 precise	0.27
 maya	0.27
@@ -71,7 +69,9 @@ impish	33
 jammy	33
 kinetic	33
 lunar	33
+mantic	33
 focal	34
 jammy	34
 kinetic	34
 lunar	34
+mantic	34
