@@ -22,6 +22,7 @@
 from MythbuntuControlPanel.plugin import MCPPlugin
 from shlex import quote
 import os, string, re, grp, getpass, subprocess, shutil, time
+import webbrowser
 
 class SetupPlugin(MCPPlugin):
     """A plugin for misc system configuraton and launching backend setup"""
@@ -45,6 +46,7 @@ class SetupPlugin(MCPPlugin):
                 self.adduser_state=True #Current user is in mythtv group
                 break
         self.linkconfig_state=os.path.exists(os.environ['HOME'] + '/.mythtv/config.xml')
+        self.be_state = subprocess.run(['systemctl', 'is-active', '--quiet', 'mythtv-backend']).returncode
         if os.path.exists('/etc/systemd/system/mythtv-backend.service.d/override.conf'):
             self.delaybackendstart_state=True
             conffile = open("/etc/systemd/system/mythtv-backend.service.d/override.conf", "r")
@@ -61,14 +63,14 @@ class SetupPlugin(MCPPlugin):
             conffile.close()
         else:
             self.delaybackendstart_state=False
-        self.stopbackend_state=False
-        self.runsetupasmythtv_state=os.path.exists('/usr/share/polkit-1/actions/org.freedesktop.policykit.mythtv-setup.policy')
 
     def applyStateToGUI(self):
         """Takes the current state information and sets the GUI
            for this plugin"""
         self.addusertomythgrp.set_active(self.adduser_state)
         self.addlinktoconfig.set_active(self.linkconfig_state)
+        if not self.be_state == 0:
+            self.mythtv_setup_button.set_sensitive(False)
         if self.delaybackendstart_state:
             self.enablenetworking.set_active(True)
             self.delaystartbox.set_active(self.delaymethod_state)
@@ -79,18 +81,11 @@ class SetupPlugin(MCPPlugin):
         else:
             self.enablenetworking.set_active(False)
             self.pingentry.hide()
-        self.stopbackend.set_active(self.stopbackend_state)
-        self.runsetupasmythtv.set_active(self.runsetupasmythtv_state)
-        status = subprocess.run(['systemctl', 'is-active', '--quiet', 'mythtv-backend']).returncode
-        if not status == 0:
+        if not self.be_state == 0:
             self.enablenetworking.set_sensitive(False)
-            self.stopbackend.set_sensitive(False)
-        if not status == 0 or not self.delaybackendstart_state:
+        if not self.be_state == 0 or not self.delaybackendstart_state:
             self.delaystartbox.set_sensitive(False)
             self.pingentry.set_sensitive(False)
-        if not shutil.which("mythtv-setup"):
-            self.mythtv_setup_button.set_sensitive(False)
-            self.runsetupasmythtv.set_sensitive(False)
 
     def on_network_select(self, widget, data=None):
         """Delay backend start method available if enable networking selected"""
@@ -143,10 +138,6 @@ class SetupPlugin(MCPPlugin):
                 self._markReconfigureRoot("backend_waits_for_network",self.delaystartbox.get_active_text())
                 if self.delaystartbox.get_active_text() == "Ping":
                     self._markReconfigureRoot("ping_location",self.pingentry.get_text())
-        if self.stopbackend_state != self.stopbackend.get_active():
-            self._markReconfigureRoot("stop_backend",self.stopbackend.get_active())
-        if self.runsetupasmythtv_state != self.runsetupasmythtv.get_active():
-            self._markReconfigureRoot("run_setup_as_mythtv",self.runsetupasmythtv.get_active())
 
     def root_scripted_changes(self,reconfigure):
         """System-wide changes that need root access to be applied.
@@ -261,31 +252,6 @@ class SetupPlugin(MCPPlugin):
                         writing_file = open("/etc/mysql/conf.d/mythtv.cnf", "w")
                         writing_file.write(new_cnf_file)
                         writing_file.close()
-            if item == "stop_backend":
-                subprocess.run(['systemctl', 'stop', 'mythtv-backend'])
-            if item == "run_setup_as_mythtv":
-                if reconfigure[item]:
-                    with open('/usr/share/polkit-1/actions/org.freedesktop.policykit.mythtv-setup.policy', 'w') as txt_file:
-                        txt_file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-                        txt_file.write('<!DOCTYPE policyconfig PUBLIC\n')
-                        txt_file.write(' "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"\n')
-                        txt_file.write(' "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">\n')
-                        txt_file.write('<policyconfig>\n')
-                        txt_file.write('    <action id="org.freedesktop.policykit.pkexec.mythtv-setup">\n')
-                        txt_file.write('    <description>Run mythtv-setup program</description>\n')
-                        txt_file.write('    <message>Authentication is required to run mythtv-setup</message>\n')
-                        txt_file.write('    <icon_name>mythtv</icon_name>\n')
-                        txt_file.write('    <defaults>\n')
-                        txt_file.write('        <allow_any>auth_admin</allow_any>\n')
-                        txt_file.write('        <allow_inactive>auth_admin</allow_inactive>\n')
-                        txt_file.write('        <allow_active>auth_admin</allow_active>\n')
-                        txt_file.write('    </defaults>\n')
-                        txt_file.write('    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/mythtv-setup</annotate>\n')
-                        txt_file.write('    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>\n')
-                        txt_file.write('    </action>\n')
-                        txt_file.write('</policyconfig>')
-                elif os.path.exists('/usr/share/polkit-1/actions/org.freedesktop.policykit.mythtv-setup.policy'):
-                    os.remove('/usr/share/polkit-1/actions/org.freedesktop.policykit.mythtv-setup.policy')
 
     def user_scripted_changes(self,reconfigure):
         """Local changes that can be performed by the user account.
@@ -302,12 +268,5 @@ class SetupPlugin(MCPPlugin):
                     os.remove(home + '/.mythtv/config.xml')
 
     def launch_setup(self,widget):
-        """Run mythtv-setup"""
-        if getpass.getuser() == 'mythtv':
-            MCPPlugin.launch_app(self,widget,'mythtv-setup')
-        elif os.path.exists('/usr/share/polkit-1/actions/org.freedesktop.policykit.mythtv-setup.policy'):
-            subprocess.run(['xhost', '+SI:localuser:mythtv'])
-            MCPPlugin.launch_app(self,widget,"pkexec --user mythtv mythtv-setup")
-            subprocess.run(['xhost', '-SI:localuser:mythtv'])
-        else:
-            MCPPlugin.launch_app(self,widget,'mythtv-setup')
+        """Open web app backend setup page in browser"""
+        webbrowser.open('http://localhost:6544/setupwizard')
