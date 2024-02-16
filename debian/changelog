@@ -1,3 +1,9 @@
+mythbuntu-control-panel (20240216-1) jammy; urgency=medium
+
+  * Mythtv v34 compatibility
+
+ -- Ted L <ted1193-lp@yahoo.com>  Fri, 16 Feb 2024 07:00:00 -0400
+
 mythbuntu-control-panel (20230519-1) jammy; urgency=medium
 
   * Improve HDHomeRun discovery
