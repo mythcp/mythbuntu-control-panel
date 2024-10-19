@@ -26,21 +26,21 @@ Changable with the --logfile switch.
 Exit codes:
 
     0 = success (for *ALL* HDHRs if multiple IPs were specified)
-    1 = no output from the hdhomerun_config discover command
+    1 = no output from the hdhomerun_config discover command or not found
     2 = IPv4 and IPv6 addresses found, disable IPv6 on NIC
     3 = logfile is not writable, delete it and try again
     4 = keyboard interrupt
-    5 x the number of HDHRs = HDHR is most likely not up
+    5+  one or more HDHRs are not up
 
 """
 
-__version__ = '1.28'
+__version__ = '1.32'
 
 import argparse
 import signal
 import subprocess
 import sys
-from datetime import datetime
+import datetime
 from os.path import basename
 from os import _exit
 from time import sleep
@@ -84,16 +84,17 @@ def get_program_arguments():
 def get_elapsed_time(start):
     ''' Calculate the time spent waiting for the HDHR to come up. '''
 
-    delta = datetime.utcnow() - start
-    rounded_delta = f'{delta.seconds + (delta.microseconds / 1000000):.3f}'
-    return rounded_delta
+    delta = datetime.datetime.now(datetime.timezone.utc) - start
+
+    return f'{delta.seconds + (delta.microseconds / 1000000):.3f}'
 
 
 def log_or_print(loglevel, message, output):
     ''' Add timestamp, log level then print to the selected location. '''
 
-    print(datetime.now().strftime("%F %T.%f")[:-3], f'{loglevel:8}', message,
-          file=output)
+    print(datetime.datetime.now().strftime("%F %T.%f")[:-3],
+                                           f'{loglevel:8}', message,
+                                           file=output)
 
 
 def last_message(loglevel, result, host, start, attempt, output):
@@ -109,7 +110,7 @@ def check_one_device(host, args, output):
 
     attempt = 0
     command = ['hdhomerun_config', 'discover']
-    start = datetime.utcnow()
+    start = datetime.datetime.now(datetime.timezone.utc)
 
     if host:
         command.append(host)
@@ -119,6 +120,9 @@ def check_one_device(host, args, output):
         try:
             discovery_response = subprocess.check_output(
                 command, text=True, stderr=subprocess.STDOUT).split()
+        except FileNotFoundError:
+            log_or_print('ERROR', f'{command[0]}: command not found', output)
+            sys.exit(1)
         except subprocess.CalledProcessError:
             log_or_print('WARNING', f'{command[0]}: got no response, attempt: '
                          f'{attempt:2}', output)
@@ -140,7 +144,7 @@ def check_one_device(host, args, output):
             sys.exit(2)
 
         if discovery_response[0] != 'hdhomerun':
-            # Consider making this an ERROR and exiting not sleeping...
+            # TODO: consider making this an ERROR and exiting not sleeping...
             log_or_print('WARNING', f'{command[0]} got an unexpected response:'
                          f' {" ".join(discovery_response)}',
                          output)
