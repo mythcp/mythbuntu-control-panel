@@ -1,3 +1,9 @@
+mythbuntu-control-panel (20241102-1) noble; urgency=medium
+
+  * Ubuntu 24.04 PPA capture state compatibility
+
+ -- Ted L <ted1193-lp@yahoo.com>  Sat, 02 Nov 2024 08:00:00 -0400
+
 mythbuntu-control-panel (20241019-1) noble; urgency=medium
 
   * Improve HDHomeRun discovery
