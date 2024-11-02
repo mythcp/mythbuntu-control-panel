@@ -29,7 +29,7 @@ import urllib.request, urllib.error, urllib.parse
 import shutil
 import configparser
 import time
-import aptsources.sourceslist as sl
+import fnmatch
 
 class MythbuntuReposPlugin(MCPPlugin):
     """A Plugin for adding MythTV Updates and MCP repos"""
@@ -126,10 +126,9 @@ class MythbuntuReposPlugin(MCPPlugin):
         except:            
             self.changes['MythTVUpdatesRepo'] = self.versions[0]
         #MCP Updates PPA current state
-        sources = sl.SourcesList()
         self.MCPUpdatesActivated = False # False unless determined true below
-        for entry in sources:
-            if '/mythcp/mcp/' in entry.str() and entry.str()[0] != "#":
+        for file in os.listdir('/etc/apt/sources.list.d'):
+            if fnmatch.fnmatch(file, 'mythcp-ubuntu-mcp*'):
                 self.MCPUpdatesActivated = True
                 break
 
