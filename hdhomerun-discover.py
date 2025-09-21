@@ -3,19 +3,19 @@
 
 """ See if the HDHomerun box(s) are accessible and running
 
-Requires Python 3.6 or later.
+Requires Python 3.6 or later. Typically, this file is put in
+/usr/local/bin then chmod to 755.
 
 For backends started by systemd, use:
 
     sudo --preserve-env systemctl edit --force mythtv-backend.service
 
-and enter or add as needed by your service:
+and modify or add in the [Service] section:
 
-    [Service]
-    ExecStartPre=-/usr/local/bin/hdhomerun-discover.py
+ExecStartPre=-/usr/local/bin/hdhomerun-discover.py
 
-Can be called with optional IP address(s) for users that
-have multiple HDHRs that have STATIC addresses.
+Can be called with optional hostname(s)/IP address(s) for users that
+have multiple HDHRs. IP addresses sould need to be STATIC.
 
 Use --help to see all options.
 
@@ -27,17 +27,17 @@ Exit codes:
 
     0 = success (for *ALL* HDHRs if multiple IPs were specified)
     1 = no output from the hdhomerun_config discover command or not found
-    2 = IPv4 and IPv6 addresses found, disable IPv6 on NIC
     3 = logfile is not writable, delete it and try again
     4 = keyboard interrupt
-    5+  one or more HDHRs are not up
+    5+ = one or more (of multiple hosts) failed
 
 """
 
-__version__ = '1.32'
+__version__ = '1.35'
 
 import argparse
 import signal
+import socket
 import subprocess
 import sys
 import datetime
@@ -59,8 +59,8 @@ def get_program_arguments():
     parser = argparse.ArgumentParser(description='HDHR Access Test',
                                      epilog='*  Default values are in ()s')
 
-    parser.add_argument('HOSTS', type=str,  default=None, nargs='*',
-                        help='optional hostname(s)/IP(s) (%(default)s)')
+    parser.add_argument('HDHRS', type=str,  default=None, nargs='*',
+                        help='optional hostnames/IPs (%(default)s)')
 
     parser.add_argument('--attempts', default=20, type=int, metavar='<num>',
                         help='number of tries to find HDHRs (%(default)i)')
@@ -93,14 +93,13 @@ def log_or_print(loglevel, message, output):
     ''' Add timestamp, log level then print to the selected location. '''
 
     print(datetime.datetime.now().strftime("%F %T.%f")[:-3],
-                                           f'{loglevel:8}', message,
-                                           file=output)
+          f'{loglevel:8}', message, file=output)
 
 
 def last_message(loglevel, result, host, start, attempt, output):
     ''' Common success or failure message text. '''
 
-    log_or_print(loglevel, f'{result} {"at " + host  + " " if host else ""}'
+    log_or_print(loglevel, f'{result} {"at " + host + " " if host else ""}'
                  f'in {get_elapsed_time(start)} seconds '
                  f'and {attempt} attempt{"s"[attempt == 1:]}\n', output)
 
@@ -124,8 +123,8 @@ def check_one_device(host, args, output):
             log_or_print('ERROR', f'{command[0]}: command not found', output)
             sys.exit(1)
         except subprocess.CalledProcessError:
-            log_or_print('WARNING', f'{command[0]}: got no response, attempt: '
-                         f'{attempt:2}', output)
+            log_or_print('WARNING', f'{command[0]}: got no response '
+                         f'from {host}, attempt: {attempt:2}', output)
             sleep(args.sleep)
             continue
 
@@ -139,9 +138,8 @@ def check_one_device(host, args, output):
                          output)
 
         if discovery_response.count('hdhomerun') > 1:
-            log_or_print('ERROR', f'{command[0]}: more than 1 IP, aborting!',
-                         output)
-            sys.exit(2)
+            log_or_print('INFO', f'{command[0]}: got more than 1 IP.', output)
+            continue
 
         if discovery_response[0] != 'hdhomerun':
             # TODO: consider making this an ERROR and exiting not sleeping...
@@ -165,12 +163,19 @@ def main(args, output=None):
     log_or_print('INFO', f'Starting {basename(__file__)} v{__version__}, '
                  f'attempts={args.attempts}, sleep={args.sleep:.2f}', output)
 
-    if args.HOSTS:
+    if args.HDHRS:
 
         return_value = 0
 
-        for host in args.HOSTS:
-            return_value += check_one_device(host, args, output)
+        for hdhr in args.HDHRS:
+
+            try:
+                ip_address = socket.gethostbyname(hdhr)
+            except socket.gaierror:
+                log_or_print("ERROR", f"Couldn't resolve {hdhr}", output)
+                continue
+
+            return_value += check_one_device(ip_address, args, output)
 
     else:
         return_value = check_one_device(None, args, output)
@@ -180,6 +185,7 @@ def main(args, output=None):
 
 if __name__ == '__main__':
 
+    RETURN_VALUE = 0
     signal.signal(signal.SIGINT, keyboard_interrupt_handler)
 
     ARGS = get_program_arguments()
@@ -188,8 +194,8 @@ if __name__ == '__main__':
         RETURN_VALUE = main(ARGS)
     else:
         try:
-            with open(ARGS.logfile, encoding='ascii', mode='a') as file_obj:
-                RETURN_VALUE = main(ARGS, output=file_obj)
+            with open(ARGS.logfile, encoding='ascii', mode='a') as file_object:
+                RETURN_VALUE += main(ARGS, output=file_object)
         except PermissionError:
             print(f'Can\'t write to {ARGS.logfile}, aborting!')
             sys.exit(3)
