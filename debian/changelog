@@ -1,3 +1,10 @@
+mythbuntu-control-panel (20251127-1) noble; urgency=medium
+
+  * Remove MythWeb and MythBrowser from Plugins tab
+  * Add option to include web app launcher in system applications menu
+
+ -- Ted L <ted1193-lp@yahoo.com>  Thu, 27 Nov 2025 08:00:00 -0400
+
 mythbuntu-control-panel (20241102-1) noble; urgency=medium
 
   * Ubuntu 24.04 PPA capture state compatibility
