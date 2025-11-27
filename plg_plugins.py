@@ -24,17 +24,12 @@
 
 from MythbuntuControlPanel.plugin import MCPPlugin
 from gi.repository import Gtk
-import os
-import string
-import logging
-import configparser
+import os, string, logging, configparser, subprocess, time
 
 from MythbuntuControlPanel.dictionaries import *
 
 class MythPluginsPlugin(MCPPlugin):
     """A tool for enabling MythTV plugins"""
-
-    CONFIGFILE = "/etc/default/mythweb"
 
     def __init__(self):
         #Initialize parent class
@@ -50,146 +45,101 @@ class MythPluginsPlugin(MCPPlugin):
            and stores it into the plugin's own internal structures"""
         #Dictionaries
         self.dictionary_state={}
-        for list in get_frontend_plugin_dictionary(self), \
-                    get_backend_plugin_dictionary(self):
-            for item in list:
-                self.dictionary_state[list[item]]=self.query_installed(item)
-
-        #Mythweb auth
-        self.mythweb_auth={}
-        found_cfg=False
-        if os.path.exists(self.CONFIGFILE):
-            self.config.read(self.CONFIGFILE)
-            try:
-                self.mythweb_auth['enable'] = self.config.getboolean("cfg", "enable")
-                self.mythweb_auth['user'] = self.config.getboolean("cfg", "username")
-                self.mythweb_auth['pass'] = self.config.getboolean("cfg", "password")
-                found_cfg=True
-            except Exception:
-                pass
-        if not found_cfg:
-            self.mythweb_auth['enable'] = os.path.exists('/etc/mythtv/mythweb-digest')
-            self.mythweb_auth['user'] = ""
-            self.mythweb_auth['pass'] = ""
+        list = get_frontend_plugin_dictionary(self)
+        for item in list:
+            self.dictionary_state[list[item]]=self.query_installed(item)
+        #Web app launcher
+        if os.path.isfile("/usr/share/applications/mythtv_web_app.desktop"):
+            self.web_app_l_state=True
+        else:
+            self.web_app_l_state=False
 
     def applyStateToGUI(self):
         """Takes the current state information and sets the GUI
            for this plugin"""
-
         #Load the detected dictionary
         for item in self.dictionary_state:
             item.set_active(self.dictionary_state[item])
+        #Web app launcher
+        self.webapp_checkbox.set_active(self.web_app_l_state)
 
-        #Mythweb auth
-        self.password_table.hide()
-        self.mythweb_username.set_text("")
-        self.mythweb_password.set_text("")
-        model = self.mythweb_password_combobox1.get_model()
-        if len(model) > 2:
-            iter = model.get_iter(Gtk.TreePath([2,0]))
-            model.remove(iter)
-        self.mythweb_password_combobox1.remove_all()
-        self.mythweb_password_combobox1.append_text("Disable")
-        self.mythweb_password_combobox1.append_text("Enable")
-        if self.mythweb_auth['enable']:
-            #self.mythweb_password_combobox1.set_active_iter(model.get_iter(Gtk.TreePath([0,1])))
-            self.mythweb_password_combobox1.set_active(1)
-            self.mythweb_password_combobox1.append_text("Reconfigure")
+    def on_web_app_select(self, widget, data=None):
+        """Backend IP entry available if web app launcher selected"""
+        if self.webapp_checkbox.get_active() and not self.web_app_l_state:
+            be_state = subprocess.run(['systemctl', 'is-active', '--quiet', 'mythtv-backend']).returncode
+            home = os.environ['HOME']
+            self.backend_ip_entry.show()
+            if be_state == 0:
+                self.backend_ip_entry.set_text('localhost')
+            elif os.path.isfile(home + '/.mythtv/config.xml'):
+                import xml.etree.ElementTree as et
+                tree = et.parse(home + '/.mythtv/config.xml')
+                root = tree.getroot()
+                host = root.find(".//Host").text
+                self.backend_ip_entry.set_text(host)
         else:
-            self.mythweb_password_combobox1.set_active(0)
-            #self.mythweb_password_combobox1.set_active_iter(model.get_iter(Gtk.TreePath([0,0])))
-
-        self.toggle_plugins(self.mythweb_checkbox)
+            self.backend_ip_entry.hide()
 
     def compareState(self):
         """Determines what items have been modified on this plugin"""
         #Prepare for state capturing
         MCPPlugin.clearParentState(self)
-
         #Installable items
-        for list in get_frontend_plugin_dictionary(self), \
-                    get_backend_plugin_dictionary(self):
-            for item in list:
-                if list[item].get_active() != self.dictionary_state[list[item]]:
-                    if list[item].get_active():
-                        self._markInstall(item)
-                    else:
-                        self._markRemove(item)
-
-        #Mythweb auth
-        if self.mythweb_password_combobox1.get_active() != self.mythweb_auth['enable']:
-            self._markReconfigureRoot("mythweb_auth",self.mythweb_password_combobox1.get_active() > 0)
-        if self.mythweb_password_combobox1.get_active():
-            if self.mythweb_username.get_text() != self.mythweb_auth['user']:
-                self._markReconfigureRoot("mythweb_user",self.mythweb_username.get_text())
-            if self.mythweb_password.get_text() != self.mythweb_auth['pass']:
-                self._markReconfigureRoot("mythweb_password",self.mythweb_password.get_text())
-
-    def toggle_plugins(self,widget):
-        if widget is not None:
-            if widget.get_name() == "mythweb_checkbox":
-                self.mythweb_password_combobox1.set_sensitive(widget.get_active())
-                if not widget.get_active():
-                    self.mythweb_password_combobox1.set_active(0)
-
-            elif widget.get_name() == "mythweb_username" or \
-                 widget.get_name() == "mythweb_password":
-                username = self.mythweb_username.get_text().split(' ')[0]
-                password = self.mythweb_password.get_text().split(' ')[0]
-                if self.mythweb_password_combobox1.get_active() != 2 or \
-                   (len(username) > 0 and len(password) > 0):
-                    self._incomplete=False
+        list = get_frontend_plugin_dictionary(self)
+        for item in list:
+            if list[item].get_active() != self.dictionary_state[list[item]]:
+                if list[item].get_active():
+                    self._markInstall(item)
                 else:
-                    self._incomplete=True
-
-            elif widget.get_name() == "mythweb_password_combobox1":
-                iteration=1
-                if self.mythweb_auth['enable']:
-                    iteration = 2
-                if widget.get_active() == iteration:
-                    self.password_table.show()
-                    self._incomplete=True
-                else:
-                    self.mythweb_username.set_text("")
-                    self.mythweb_password.set_text("")
-                    self.password_table.hide()
-                    self._incomplete=False
+                    self._markRemove(item)
+        #Web app launcher
+        web_app_l_state_now = self.webapp_checkbox.get_active()
+        if self.web_app_l_state != web_app_l_state_now:
+            if web_app_l_state_now:
+                self._markReconfigureRoot("web_app_launcher",self.backend_ip_entry.get_text())
+            else:
+                self._markReconfigureRoot("web_app_launcher","remove")
 
     def root_scripted_changes(self,reconfigure):
         """System-wide changes that need root access to be applied.
            This function is ran by the dbus backend"""
-
-        found_cfg = False
-        print(self.CONFIGFILE)
-        if os.path.exists(self.CONFIGFILE):
-            try:
-                self.config.read(self.CONFIGFILE)
-                if not self.config.has_section('cfg'):
-                  self.config.add_section("cfg")
-                found_cfg = True
-            except Exception:
-                pass
-        if not found_cfg:
-            self.config.add_section("cfg")
-            self.config.set("cfg", "enable", "false")
-            self.config.set("cfg", "only", "false")
-            self.config.set("cfg", "username", "")
-            self.config.set("cfg", "password", "")
-
         for item in reconfigure:
-            if item == "mythweb_auth":
-                if not reconfigure[item]:
-                    if os.path.exists('/etc/mythtv/mythweb-digest'):
-                        os.remove('/etc/mythtv/mythweb-digest')
-                    self.config.set("cfg", "enable", "false")
+            if item == "web_app_launcher":
+                if reconfigure[item] != "remove":
+                    host = reconfigure[item]
+                    self.emit_progress("Checking if backend is reachable at location entered", 10)
+                    time.sleep(2)
+                    if host == 'Backend IP' or host == '':
+                        self.emit_progress("IP address or host name was not entered (aborting)", 0)
+                        time.sleep(2)
+                    elif subprocess.run(["nc", "-z", host, "6543"]).returncode != 0:
+                        self.emit_progress("Backend not reachable at location entered (aborting)", 0)
+                        time.sleep(2)
+                    else:
+                        self.emit_progress("Creating MythTV Web App applications menu entry", 50)
+                        time.sleep(2)
+                        with open("/usr/share/applications/mythtv_web_app.desktop", 'w') as txt_file:
+                            txt_file.write('[Desktop Entry]\n')
+                            txt_file.write('Name=MythTV Web App\n')
+                            txt_file.write('Comment=Web app for MythTV administration\n')
+                            txt_file.write('Icon=system-component-application\n')
+                            txt_file.write('Exec=xdg-open http://' + host + ':6544/\n')
+                            txt_file.write('Terminal=false\n')
+                            txt_file.write('Type=Application\n')
+                            txt_file.write('Categories=GTK;Utility;AudioVideo;Audio;Video;\n')
+                            txt_file.write('Actions=upcoming-recordings;backend-setup;program-guide\n')
+                            txt_file.write('\n')
+                            txt_file.write('[Desktop Action upcoming-recordings]\n')
+                            txt_file.write('Name=Upcoming Recordings\n')
+                            txt_file.write('Exec=xdg-open http://' + host + ':6544/dashboard/upcoming\n')
+                            txt_file.write('\n')
+                            txt_file.write('[Desktop Action backend-setup]\n')
+                            txt_file.write('Name=Backend Setup\n')
+                            txt_file.write('Exec=xdg-open http://' + host + ':6544/setupwizard/dbsetup\n')
+                            txt_file.write('\n')
+                            txt_file.write('[Desktop Action program-guide]\n')
+                            txt_file.write('Name=Program Guide\n')
+                            txt_file.write('Exec=xdg-open http://' + host + ':6544/dashboard/program-guide\n')
                 else:
-                    self.config.set("cfg", "enable", "true")
-            elif item == "mythweb_user":
-                self.config.set("cfg", "username", reconfigure[item])
-            elif item == "mythweb_password":
-                self.config.set("cfg", "password", reconfigure[item])
-
-        with open(self.CONFIGFILE, 'w') as configfile:
-            self.config.write(configfile)
-        os.system("dpkg-reconfigure -fnoninteractive mythweb")
-
+                    if os.path.isfile("/usr/share/applications/mythtv_web_app.desktop"):
+                        os.remove("/usr/share/applications/mythtv_web_app.desktop")
