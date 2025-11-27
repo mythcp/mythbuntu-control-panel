@@ -269,4 +269,4 @@ class SetupPlugin(MCPPlugin):
 
     def launch_setup(self,widget):
         """Open web app backend setup page in browser"""
-        webbrowser.open('http://localhost:6544/setupwizard')
+        webbrowser.open('http://localhost:6544/setupwizard/dbsetup')
