@@ -1,19 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.2 -->
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.1 -->
 <interface>
+  <!-- interface-name tab_plugins.ui -->
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkBox" id="tab_plugins">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="border_width">6</property>
+    <property name="border-width">6</property>
+    <property name="can-focus">False</property>
     <property name="orientation">vertical</property>
+    <property name="visible">True</property>
     <child>
       <object class="GtkLabel" id="plugins_title">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
+        <property name="can-focus">True</property>
         <property name="label" translatable="yes">&lt;big&gt;&lt;b&gt;Plugins&lt;/b&gt;&lt;/big&gt;</property>
-        <property name="use_markup">True</property>
-        <property name="single_line_mode">True</property>
+        <property name="single-line-mode">True</property>
+        <property name="use-markup">True</property>
+        <property name="visible">True</property>
         <property name="xalign">0</property>
       </object>
       <packing>
@@ -24,8 +25,8 @@
     </child>
     <child>
       <object class="GtkSeparator" id="hseparator27">
+        <property name="can-focus">False</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
       </object>
       <packing>
         <property name="expand">False</property>
@@ -36,19 +37,19 @@
     </child>
     <child>
       <object class="GtkBox" id="vbox32">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
+        <property name="visible">True</property>
         <child>
           <object class="GtkLabel" id="plugins_description">
-            <property name="width_request">499</property>
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-            <property name="margin_top">10</property>
-            <property name="label" translatable="yes">Plugins futher extend the functionality of a MythTV box.  Make the desired
+            <property name="can-focus">False</property>
+            <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
+            <property name="label" translatable="yes">Plugins further extend the functionality of a MythTV box.  Make the desired
 selections and apply the change after setting up the backend and frontend.</property>
+            <property name="margin-top">10</property>
+            <property name="visible">True</property>
+            <property name="width-request">499</property>
             <property name="wrap">True</property>
             <property name="xalign">0</property>
           </object>
@@ -60,138 +61,111 @@ selections and apply the change after setting up the backend and frontend.</prop
         </child>
         <child>
           <object class="GtkGrid" id="table1">
+            <property name="can-focus">False</property>
+            <property name="column-spacing">25</property>
+            <property name="margin-left">25</property>
+            <property name="row-spacing">4</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">25</property>
-            <property name="row_spacing">4</property>
-            <property name="column_spacing">25</property>
             <child>
               <object class="GtkCheckButton" id="mythnews_checkbox">
+                <property name="border-width">6</property>
+                <property name="can-focus">True</property>
+                <property name="draw-indicator">True</property>
+                <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">MythNews</property>
+                <property name="receives-default">False</property>
+                <property name="tooltip-text" translatable="yes">This frontend plugin shows the news from your favorite sources that use the RSS (Really Simple Syndication) format.</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A frontend plugin which shows the news from your favorite sources that use RSS (Really Simple Syndication) format.</property>
-                <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="mythbrowser_checkbox">
-                <property name="label" translatable="yes">MythBrowser</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A frontend plugin that provides a fully functional WebKit-based browser.</property>
-                <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkCheckButton" id="mythweather_checkbox">
-                <property name="label" translatable="yes">MythWeather</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A frontend plugin that downloads and displays weather information.</property>
+                <property name="border-width">6</property>
+                <property name="can-focus">True</property>
+                <property name="draw-indicator">True</property>
+                <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
                 <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
+                <property name="label" translatable="yes">MythWeather</property>
+                <property name="receives-default">False</property>
+                <property name="tooltip-text" translatable="yes">This frontend plugin downloads and displays weather information.</property>
+                <property name="visible">True</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkCheckButton" id="mythgame_checkbox">
+                <property name="border-width">6</property>
+                <property name="can-focus">True</property>
+                <property name="draw-indicator">True</property>
+                <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">MythGame</property>
+                <property name="receives-default">False</property>
+                <property name="tooltip-text" translatable="yes">This frontend plugin is a starter for games and emulators, so they can be run from within MythTV.</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A frontend plugin that is a starter for games and emulators, so they can be run from within MythTV.</property>
-                <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="mythweb_checkbox">
-                <property name="label" translatable="yes">MythWeb</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A backend plugin that provides a frontend for scheduling and managing recordings from a device with a web browser on the network.</property>
-                <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="toggle_plugins" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">2</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkCheckButton" id="mythmusic_checkbox">
-                <property name="label" translatable="yes">MythMusic</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A frontend plugin that allows you to play and manage music and audio files.</property>
+                <property name="border-width">6</property>
+                <property name="can-focus">True</property>
+                <property name="draw-indicator">True</property>
+                <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
                 <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
+                <property name="label" translatable="yes">MythMusic</property>
+                <property name="receives-default">False</property>
+                <property name="tooltip-text" translatable="yes">This frontend plugin allows you to play and manage music and audio files.</property>
+                <property name="visible">True</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">2</property>
               </packing>
             </child>
             <child>
               <object class="GtkCheckButton" id="mythzoneminder_checkbox">
-                <property name="label" translatable="yes">MythZoneMinder</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A plugin to interface with some of the features of ZoneMinder, including checking the ZoneMinder server status, changing camera recording functions, viewing the live feed, and more. </property>
+                <property name="border-width">6</property>
+                <property name="can-focus">True</property>
+                <property name="draw-indicator">True</property>
+                <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
                 <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
+                <property name="label" translatable="yes">MythZoneMinder</property>
+                <property name="receives-default">False</property>
+                <property name="tooltip-text" translatable="yes">This plugin interfaces with some of the features of ZoneMinder, including checking the ZoneMinder server status, changing camera recording functions, viewing the live feed, and more. </property>
+                <property name="visible">True</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">3</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">2</property>
               </packing>
             </child>
             <child>
               <object class="GtkCheckButton" id="mytharchive_checkbox">
-                <property name="label" translatable="yes">MythArchive</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="tooltip_text" translatable="yes">A frontend plugin that lets you create DVDs and file archives from your recordings, MythVideo files, and any video files available on your system.</property>
+                <property name="border-width">6</property>
+                <property name="can-focus">True</property>
+                <property name="draw-indicator">True</property>
+                <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
                 <property name="halign">start</property>
-                <property name="draw_indicator">True</property>
+                <property name="label" translatable="yes">MythArchive</property>
+                <property name="receives-default">False</property>
+                <property name="tooltip-text" translatable="yes">This frontend plugin lets you create DVDs and file archives from your recordings, MythVideo files, and any video files available on your system.</property>
+                <property name="visible">True</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
           </object>
@@ -203,13 +177,12 @@ selections and apply the change after setting up the backend and frontend.</prop
         </child>
         <child>
           <object class="GtkLabel" id="description2">
-            <property name="width_request">499</property>
+            <property name="can-focus">False</property>
+            <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
+            <property name="label" translatable="yes">A web app launcher can be added to the system applications menu.</property>
+            <property name="margin-top">10</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-            <property name="margin_top">10</property>
-            <property name="label" translatable="yes">MythWeb can optionally be password protected.  Modify this after 
-installing MythWeb.</property>
+            <property name="width-request">499</property>
             <property name="wrap">True</property>
             <property name="xalign">0</property>
           </object>
@@ -220,103 +193,44 @@ installing MythWeb.</property>
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="hbox1">
+          <object class="GtkGrid" id="table2">
+            <property name="can-focus">False</property>
+            <property name="column-spacing">25</property>
+            <property name="margin-left">25</property>
+            <property name="row-spacing">4</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="halign">start</property>
-            <property name="margin_left">25</property>
-            <property name="spacing">7</property>
             <child>
-              <object class="GtkComboBoxText" id="mythweb_password_combobox1">
-                <property name="width_request">140</property>
+              <object class="GtkCheckButton" id="webapp_checkbox">
+                <property name="border-width">6</property>
+                <property name="can-focus">True</property>
+                <property name="draw-indicator">True</property>
+                <property name="events">button-press-mask|button-release-mask|pointer-motion-hint-mask|pointer-motion-mask</property>
+                <property name="halign">start</property>
+                <property name="label" translatable="yes">Web App Launcher</property>
+                <property name="receives-default">False</property>
+                <property name="tooltip-text" translatable="yes">This applications menu entry launches the default web browser and opens the web app.</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <signal name="changed" handler="toggle_plugins" swapped="no"/>
+                <signal name="clicked" handler="on_web_app_select"/>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label3">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="label" translatable="yes">Password protect MythWeb</property>
-                <property name="wrap">True</property>
+              <object class="GtkEntry" id="backend_ip_entry">
+                <property name="can-focus">True</property>
+                <property name="placeholder-text" translatable="yes">Backend IP</property>
+                <property name="tooltip-text" translatable="yes">Enter the backend IP address or host name (example: 192.168.0.100).</property>
+                <property name="visible">False</property>
+                <property name="width-chars">14</property>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">3</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkGrid" id="password_table">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">25</property>
-            <property name="row_spacing">4</property>
-            <property name="column_spacing">17</property>
-            <child>
-              <object class="GtkLabel" id="mythweb_username_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Username</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="mythweb_password_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Password</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="mythweb_username">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <signal name="changed" handler="toggle_plugins" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="mythweb_password">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <signal name="changed" handler="toggle_plugins" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">4</property>
-          </packing>
         </child>
       </object>
       <packing>
