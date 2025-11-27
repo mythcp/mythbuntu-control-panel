@@ -43,16 +43,12 @@ def get_install_type_dictionary(self):
 def get_frontend_plugin_dictionary(self):
     list = {
         "mytharchive": self.mytharchive_checkbox,                              \
-        "mythbrowser": self.mythbrowser_checkbox,                              \
         "mythgame": self.mythgame_checkbox,                                    \
         "mythmusic": self.mythmusic_checkbox,                                  \
         "mythnews": self.mythnews_checkbox,                                    \
         "mythweather": self.mythweather_checkbox,                              \
         "mythzoneminder": self.mythzoneminder_checkbox }
     return list
-
-def get_backend_plugin_dictionary(self):
-    return { "mythweb": self.mythweb_checkbox }
 
 ####################
 #Other dictionaries: these are for managing a list of all other apps
