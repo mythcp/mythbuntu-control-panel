@@ -1,4 +1,4 @@
-MYTHTV_RELEASE	35
+MYTHTV_RELEASE	36
 TRUNKPASS	YouMustBeThisTallToRide
 URL	https://raw.githubusercontent.com/mythcp/mythbuntu-control-panel/master/repos.db
 
@@ -24,6 +24,7 @@ hirsute	32
 impish	32
 jammy	32
 kinetic	32
+lunar	32
 focal	33
 jammy	33
 kinetic	33
@@ -40,8 +41,12 @@ noble	35
 oracular	35
 plucky	35
 questing	35
+resolute	35
 noble	36
 oracular	36
 plucky	36
 questing	36
+resolute	36
+noble	37
+resolute	37
 
