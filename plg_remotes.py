@@ -32,7 +32,7 @@ class RemotesPlugin(MCPPlugin):
         #Initialize parent class
         information = {}
         information["name"] = "Remotes"
-        information["icon"] = "gtk-media-record"
+        information["icon"] = "org.gnome.Software"
         information["ui"] = "tab_remotes"
         MCPPlugin.__init__(self,information)
 
