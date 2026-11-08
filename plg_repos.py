@@ -63,8 +63,8 @@ class MythbuntuReposPlugin(MCPPlugin):
         """Determines the state of the items managed by this plugin
            and stores it into the plugin's own internal structures"""
         self.versions = []
-        for line in open("/etc/lsb-release"):
-            if "DISTRIB_CODENAME" in line:
+        for line in open("/etc/os-release"):
+            if "VERSION_CODENAME" in line:
                 line = line.strip("\n")
                 throwaway, distro = line.split("=")
         NumRepos = 0
